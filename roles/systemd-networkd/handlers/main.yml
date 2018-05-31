@@ -1,0 +1,13 @@
+- name: enable systemd-networkd
+  systemd:
+    name: systemd-networkd
+    enabled: yes
+    daemon_reload: yes
+  listen: "enable systemd-networkd"
+
+- name: enable systemd-resolved
+  systemd:
+    name: systemd-resolved
+    enabled: yes
+    daemon_reload: yes
+  listen: "enable systemd-resolved"

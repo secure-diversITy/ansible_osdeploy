@@ -1,0 +1,15 @@
+- name: install some packages
+  apt: name={{ item }} state=latest
+  with_items:
+    - powertop
+
+- name: install powertop.service
+  copy:
+    src: powertop.service
+    dest: /etc/systemd/system/powertop.service
+
+- name: install powertop.timer
+  copy:
+    src: powertop.timer
+    dest: /etc/systemd/system/powertop.timer
+  notify: enable powertop timer
