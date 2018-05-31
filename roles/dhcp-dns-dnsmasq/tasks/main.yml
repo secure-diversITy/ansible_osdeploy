@@ -1,0 +1,10 @@
+- name: install dns-firewall packages
+  apt:
+    name: dnsmasq
+    state: latest
+
+- name: configure dnsmasq
+  template:
+    src: dnsmasq-transparent-proxy.j2
+    dest: /etc/dnsmasq.d/transparent-proxy
+  notify: "restart dnsmasq"

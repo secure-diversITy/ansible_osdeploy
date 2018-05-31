@@ -1,0 +1,3 @@
+- name: rebuild di-netboot-assistant menu
+  command: di-netboot-assistant rebuild-menu
+  listen: rebuild di-netboot-assistant menu

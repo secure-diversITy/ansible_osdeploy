@@ -1,0 +1,28 @@
+- name: install tftp-netboot-installer packages
+  apt:
+    name:
+      - di-netboot-assistant
+      - debian-installer-9-netboot-amd64
+
+- name: bind mount images
+  mount:
+    name: "{{ tftp_root }}/di-netboot-pkg/"
+    src: /usr/lib/debian-installer/
+    fstype: none
+    opts: bind
+#    state: mounted   BEGINN WORKAROUND
+    state: present
+  register: fstab
+
+- name: Reload fstab
+  command: mount -a
+  when: fstab.changed
+# https://github.com/ansible/ansible/issues/23487 END WORKAROUND
+
+- name: configure dnsmasq
+  template:
+    src: dnsmasq-tftp-netboot-installer.j2
+    dest: /etc/dnsmasq.d/tftp-netboot-installer
+  notify:
+    - restart dnsmasq
+    - rebuild di-netboot-assistant menu

@@ -1,0 +1,27 @@
+- name: make preseed directory available
+  file:
+    path: "{{ tftp_root }}/d-i/{{ di_dist }}"
+    state: directory
+
+- name: provide preseed file
+  template:
+    src: preseed.cfg
+    dest: "{{ tftp_root }}/d-i/{{ di_dist }}"
+
+- name: make installbox resolvable in /etc/hosts from LAN
+  replace:
+    dest: /etc/hosts
+    regexp: '(127.0.1.1\s+)installbox'
+    replace: '\1localhost\n{{ ipaddr_lan }}	installbox'
+
+- name: add auto boot entry to di-netboot-assistant
+  blockinfile:
+    dest: /etc/di-netboot-assistant/pxelinux.HEAD
+    insertbefore: EOF
+    block: |
+      LABEL quick
+      MENU LABEL Debian Installer ({{ di_dist }} ; amd64 + Preseed)
+      kernel ::/di-netboot-pkg/images/9/amd64/text/debian-installer/amd64/linux
+      append initrd=::/di-netboot-pkg/images/9/amd64/text/debian-installer/amd64/initrd.gz auto=true priority=critical url=tftp://installbox
+      TIMEOUT 100
+  notify: "rebuild di-netboot-assistant menu"

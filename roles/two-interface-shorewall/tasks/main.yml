@@ -1,0 +1,86 @@
+- name: add if_lan with static address
+  template:
+    src: interfaces-static.j2
+    dest: /etc/network/interfaces.d/static
+
+- name: make if_wan auto start
+  lineinfile:
+    dest: /etc/network/interfaces
+    line: "auto {{ if_wan }}"
+    insertbefore: "iface\\s+{{ if_wan }}\\s+inet\\s+dhcp"
+  notify: restart networking
+
+- name: install shorewall packages
+  apt: name=shorewall state=latest
+
+- name: copy shorewall configuration
+  command: cp {{ item }} /etc/shorewall/
+  args:
+    chdir: /usr/share/doc/shorewall/examples/two-interfaces/
+    creates: "/etc/shorewall/{{ item }}"
+  with_items:
+    - interfaces
+    - snat
+    - policy
+    - rules
+    - stoppedrules
+    - zones
+  notify: restart shorewall
+
+- name: find files in /etc/shorewall/
+  find:
+    paths: /etc/shorewall/
+    use_regex: yes
+    pattern: '.+[^~]$'
+    contains: '.*(eth0|eth1).*'
+  register: find_result
+  notify: restart shorewall
+
+- name: fix WAN interface name in shorewall configuration
+  replace:
+    dest: "{{ item.path }}"
+    regexp: 'eth0'
+    replace: "{{ if_wan }}"
+    backup: yes
+  with_items: "{{ find_result.files }}"
+  notify: restart shorewall
+
+- name: fix LAN interface name in shorewall configuration
+  replace:
+    dest: "{{ item.path }}"
+    regexp: 'eth1'
+    replace: "{{ if_lan }}"
+    backup: yes
+  with_items: "{{ find_result.files }}"
+  notify: restart shorewall
+
+- name: configure forwarding in shorewall.conf
+  replace:
+    dest: /etc/shorewall/shorewall.conf
+    regexp: 'IP_FORWARDING=Keep'
+    replace: 'IP_FORWARDING=Yes'
+    backup: yes
+  notify: restart shorewall
+
+- name: configure shorewall policy
+  replace:
+    dest: /etc/shorewall/policy
+    regexp: 'loc(\s+)net(\s+)ACCEPT'
+    replace: 'loc\1all\2ACCEPT\n$FW\1all\2ACCEPT'
+    backup: yes
+  notify: restart shorewall
+
+- name: configure shorewall rules
+  replace:
+    dest: /etc/shorewall/rules
+    regexp: '(SSH\(ACCEPT\)\s+)loc(\s+\$FW)'
+    replace: '\1all\2'
+    backup: yes
+  notify: restart shorewall
+
+- name: enable shorewall in /etc/defaults/shorewall
+  replace:
+    dest: /etc/default/shorewall
+    regexp: 'startup=0'
+    replace: 'startup=1'
+  notify: restart shorewall

@@ -1,0 +1,19 @@
+# Update lists and upgrade packages.
+
+- name: update apt package lists
+  apt:
+    update_cache: yes
+    cache_valid_time: 86400
+
+- name: upgrade packages
+  apt:
+    upgrade: dist
+    autoremove: yes
+
+- name: install some packages
+  apt: name={{ item }} state=latest
+  with_items:
+    - etckeeper
+
+#- name: clean apt package cache
+#  command: apt clean

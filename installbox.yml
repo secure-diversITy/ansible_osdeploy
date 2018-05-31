@@ -1,0 +1,24 @@
+---
+# This playbook deploys the installbox on a minimal installation.
+
+- name: apply configuration to the installbox
+  hosts: installboxes
+  remote_user: ansible
+  become: yes
+  vars:
+    hostname: installbox
+    di_dist: "stretch"
+    if_lan: "ens8"
+    if_wan: "{{ ansible_default_ipv4.interface }}"
+    ipaddr_lan: 192.168.0.10
+    dhcp_range: 192.168.0.50,192.168.0.150,2h
+    tftp_root: "/var/lib/tftpboot"
+    deb_mirror: "ftp-stud.hs-esslingen.de"
+
+  roles:
+    - up2date-debian
+    - two-interface-shorewall
+    - dhcp-dns-dnsmasq
+    - transparent-squid
+    - tftp-netboot-installer
+    - preseed-installer
