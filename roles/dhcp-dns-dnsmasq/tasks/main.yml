@@ -1,4 +1,4 @@
-- name: install dns-firewall packages
+- name: install dnsmasq package
   apt:
     name: dnsmasq
     state: latest

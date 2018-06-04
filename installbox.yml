@@ -2,18 +2,24 @@
 # This playbook deploys the installbox on a minimal installation.
 
 - name: apply configuration to the installbox
-  hosts: installboxes
+  hosts: all
   remote_user: ansible
   become: yes
   vars:
-    hostname: installbox
-    di_dist: "stretch"
-    if_lan: "ens8"
+    if_lan: ""           #  ← interface name here, like:  ens3 or enp2s0"
     if_wan: "{{ ansible_default_ipv4.interface }}"
+    hostname: "{{ ansible_hostname }}"
     ipaddr_lan: 192.168.0.10
     dhcp_range: 192.168.0.50,192.168.0.150,2h
     tftp_root: "/var/lib/tftpboot"
-    deb_mirror: "ftp-stud.hs-esslingen.de"
+    deb_mirror: "ftp.debian.org"
+    di_dist: "stretch"
+
+  pre_tasks:
+    - name: validate if interface is available
+      fail:
+        msg: "Interface {{ if_lan }} does not exist or is already used."
+      when: if_lan not in ansible_interfaces or if_lan == if_wan
 
   roles:
     - up2date-debian

@@ -1,3 +1,6 @@
 - name: rebuild di-netboot-assistant menu
-  command: di-netboot-assistant rebuild-menu
+  command: "{{ item }}"
+  with_items:
+    - di-netboot-assistant rebuild-menu
+    - di-netboot-assistant rebuild-grub
   listen: rebuild di-netboot-assistant menu

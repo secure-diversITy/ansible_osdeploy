@@ -1,18 +1,31 @@
-- name: install tftp-netboot-installer packages
+- name: add stretch-backports
+  apt_repository:
+    repo: deb http://deb.debian.org/debian/ stretch-backports main
+    state: present
+
+- name: install di-netboot-assistant from backports
   apt:
     name:
       - di-netboot-assistant
+    default_release: stretch-backports
+    update_cache: yes
+
+- name: add installer package
+  apt:
+    name:
       - debian-installer-9-netboot-amd64
 
 - name: bind mount images
   mount:
-    name: "{{ tftp_root }}/di-netboot-pkg/"
+    path: "{{ tftp_root }}/d-i/n-pkg/"
     src: /usr/lib/debian-installer/
     fstype: none
     opts: bind
 #    state: mounted   BEGINN WORKAROUND
     state: present
   register: fstab
+
+- file: path="{{ tftp_root }}/d-i/n-pkg/" state=directory recurse=yes
 
 - name: Reload fstab
   command: mount -a

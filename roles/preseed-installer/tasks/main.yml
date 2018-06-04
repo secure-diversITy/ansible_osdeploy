@@ -4,24 +4,36 @@
     state: directory
 
 - name: provide preseed file
-  template:
-    src: preseed.cfg
+  copy:
+    src: /usr/share/doc/di-netboot-assistant/examples/preseed.cfg
     dest: "{{ tftp_root }}/d-i/{{ di_dist }}"
+    force: no
 
-- name: make installbox resolvable in /etc/hosts from LAN
+- name: make the hostname resolvable from the LAN
   replace:
     dest: /etc/hosts
-    regexp: '(127.0.1.1\s+)installbox'
-    replace: '\1localhost\n{{ ipaddr_lan }}	installbox'
+    regexp: '(127.0.1.1\s+){{ hostname }}'
+    replace: '\1localhost\n{{ ipaddr_lan }}	{{ hostname }}'
 
-- name: add auto boot entry to di-netboot-assistant
+- name: add auto pxe boot entry to di-netboot-assistant
   blockinfile:
     dest: /etc/di-netboot-assistant/pxelinux.HEAD
     insertbefore: EOF
     block: |
-      LABEL quick
-      MENU LABEL Debian Installer ({{ di_dist }} ; amd64 + Preseed)
-      kernel ::/di-netboot-pkg/images/9/amd64/text/debian-installer/amd64/linux
-      append initrd=::/di-netboot-pkg/images/9/amd64/text/debian-installer/amd64/initrd.gz auto=true priority=critical url=tftp://installbox
       TIMEOUT 100
+      LABEL autoinstall
+         MENU LABEL Debian {{ di_dist }} (amd64) + preseed
+         kernel ::/d-i/n-pkg/images/9/amd64/text/debian-installer/amd64/linux
+         append initrd=::/d-i/n-pkg/images/9/amd64/text/debian-installer/amd64/initrd.gz --- auto=true priority=critical url=tftp://{{ hostname }}
+  notify: "rebuild di-netboot-assistant menu"
+
+- name: add auto efi boot entry to di-netboot-assistant
+  blockinfile:
+    dest: /etc/di-netboot-assistant/grub.cfg.HEAD
+    insertbefore: EOF
+    block: |
+      menuentry 'Debian stable (amd64) + preseed' {
+         linux   /d-i/n-pkg/images/9/amd64/text/debian-installer/amd64/linux --- auto=true priority=critical url=tftp://{{ hostname }}
+         initrd  /d-i/n-pkg/images/9/amd64/text/debian-installer/amd64/initrd.gz
+      }
   notify: "rebuild di-netboot-assistant menu"

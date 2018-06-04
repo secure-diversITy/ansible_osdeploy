@@ -2,12 +2,6 @@
   template:
     src: interfaces-static.j2
     dest: /etc/network/interfaces.d/static
-
-- name: make if_wan auto start
-  lineinfile:
-    dest: /etc/network/interfaces
-    line: "auto {{ if_wan }}"
-    insertbefore: "iface\\s+{{ if_wan }}\\s+inet\\s+dhcp"
   notify: restart networking
 
 - name: install shorewall packages
