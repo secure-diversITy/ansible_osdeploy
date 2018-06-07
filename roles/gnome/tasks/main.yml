@@ -1,6 +1,11 @@
 #- name: gnome hibernate by default
 #  apt: name=gnome-shell-extension-suspend-button state=latest
 
+- name: gnome desktop
+  apt:
+    name: task-gnome-desktop
+    state: latest
+
 - name: make sure /etc/dconf/profile/ exists
   file: path=/etc/dconf/profile/ state=directory recurse=yes
 
