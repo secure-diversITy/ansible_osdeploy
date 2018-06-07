@@ -14,6 +14,7 @@
     tftp_root: "/var/lib/tftpboot"
     deb_mirror: "ftp.debian.org"
     di_dist: "stretch"
+    repo_dir: "/home/ansible/kiosk"
 
   pre_tasks:
     - name: validate if interface is available
@@ -28,3 +29,4 @@
     - transparent-squid
     - tftp-netboot-installer
     - preseed-installer
+#    - installbox2kiosk    #  enable this to install kiosk automatically

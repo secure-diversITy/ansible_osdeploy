@@ -1,0 +1,7 @@
+- name: reload xinetd
+  systemd:
+    daemon_reload: yes
+    name: xinetd
+    state: reloaded
+    enabled: yes
+  listen: reload xinetd
