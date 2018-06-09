@@ -1,0 +1,33 @@
+
+        Run Debian in your Local Area Network
+       =======================================
+
+Installbox
+~~~~~~~~~~
+ • Debian installation:
+   - user 'ansible' in sudo group
+   - WAN interface configured and connected
+   - LAN interface not configured/managed
+
+ • Customize installbox.yml:
+   - set if_lan
+   - modify deb_mirror (optional)
+   - enable installbox2kiosk task (optinal)
+
+ • Run ansible:
+     ssh-copy-id ansible@1.2.3.4
+     ansible-playbook installbox.yml -v --become --ask-become-pass -u ansible -i 1.2.3.4,
+
+
+Kiosk
+~~~~~
+ • Debian installation:
+   - user 'ansible' in sudo group
+
+ • Customize kiosk.yml:
+   - WiFi parameters (optional)
+   - desktop environment (optional)
+
+ • Run ansible:
+     ssh-copy-id ansible@1.2.3.4
+     ansible-playbook kiosk.yml -v --become --ask-become-pass -u ansible -i 1.2.3.4,
