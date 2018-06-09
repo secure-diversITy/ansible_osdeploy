@@ -10,9 +10,9 @@ Installbox
    - LAN interface not configured/managed
 
  • Customize installbox.yml:
-   - set if_lan
-   - modify deb_mirror (optional)
-   - enable installbox2kiosk task (optinal)
+   - set if_lan (mandatory)
+   - modify deb_mirror
+   - enable installbox2kiosk task
 
  • Run ansible:
      ssh-copy-id ansible@1.2.3.4
@@ -25,8 +25,9 @@ Kiosk
    - user 'ansible' in sudo group
 
  • Customize kiosk.yml:
-   - WiFi parameters (optional)
-   - desktop environment (optional)
+   - WiFi parameters
+   - package selection: extra_pkgs and extra_pkgs_bpo for backports
+   - desktop environment
 
  • Run ansible:
      ssh-copy-id ansible@1.2.3.4

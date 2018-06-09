@@ -1,3 +1,17 @@
+- name: add stretch-backports
+  apt_repository:
+    repo: deb http://deb.debian.org/debian/ stretch-backports main
+    state: present
+    update_cache: yes
+
+- name: install extra packages from stable
+  apt: name={{ item }} state=latest
+  with_items: "{{ extra_pkgs }}"
+
+- name: install extra packages from backports
+  apt: name={{ item }} state=latest default_release=stretch-backports
+  with_items: "{{ extra_pkgs_bpo }}"
+
 - name: check if gdm3 is installed
   stat: path=/etc/gdm3/daemon.conf
   register: gdm3

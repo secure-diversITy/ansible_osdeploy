@@ -2,13 +2,18 @@
 # This playbook deploys a kiosk-computer
 
 - name: apply configuration to the machines
-  hosts: kiosk-computers
+  hosts: all
   remote_user: ansible
   become: yes
   vars:
     auto_user: debi
     wifi_ssid: "YOUR SSID HERE"
     wifi_passwd: "YOUR WIFI-PW HERE"
+    extra_pkgs:
+      - unattended-upgrades
+      - xul-ext-ublock-origin
+    extra_pkgs_bpo:
+      - libreoffice
 
   roles:
     - up2date-debian
