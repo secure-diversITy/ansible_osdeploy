@@ -1,11 +1,14 @@
 [org/gnome/shell]
-enabled-extensions=['apps-menu@gnome-shell-extensions.gcampax.github.com']
+enabled-extensions=['apps-menu@gnome-shell-extensions.gcampax.github.com', 'window-list@gnome-shell-extensions.gcampax.github.com']
 
 [org/gnome/desktop/background]
 show-desktop-icons=true
 
 [org/gnome/desktop/input-sources]
 sources=[('xkb', 'tr'), ('xkb', 'de'), ('xkb', 'us')]
+
+[org/gnome/desktop/wm/preferences]
+button-layout='appmenu:minimize,maximize,close'
 
 [org/gnome/desktop/peripherals/touchpad]
 natural-scroll=false
