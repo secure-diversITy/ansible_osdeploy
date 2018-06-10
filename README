@@ -2,6 +2,37 @@
         Run Debian in your Local Area Network
        =======================================
 
+The goal of the "Debian Local Area Network"-project is to make setting
+up Debian in a local area network as easy as possible.  This repository
+offers ansible playbooks and instructions for the following machines:
+
+ • Installbox:
+     - set up as gateway to some external network (WAN)
+     - providing TFTP installation on the LAN interface
+     - automatic installs: preseeding and ansible playbooks
+     - squid package cache
+     use case: orchestration of automatic installs in the LAN
+
+ • Kiosk:
+     - auto login user
+     - reasonable defaults
+     - temporary home directory on tmpfs, reset at boot
+     use case: school's computer, hackerspace, …
+
+ • Cloudbox:
+     - setup of a home cloud server
+     - dynamic DNS name
+     - …
+     use case: nextcloud server in the basement
+
+Contributions like patches, suggestions, pull requests and/or further
+profiles are highly appreciated!
+
+----------------------------
+
+ Instructions
+==============
+
 Installbox
 ~~~~~~~~~~
  • Debian installation:
