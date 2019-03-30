@@ -15,7 +15,6 @@
     dest: /etc/dconf/profile/user
   notify: update dconf
 
-
 - name: make sure /etc/dconf/db/local.d/ exists
   file: path=/etc/dconf/db/local.d/ state=directory recurse=yes
 
@@ -24,3 +23,10 @@
     src: defaults
     dest: /etc/dconf/db/local.d/defaults
   notify: update dconf
+
+## Bug #698504  
+- name: allow print job management
+  replace:
+    dest: "/etc/cups/cups-files.conf"
+    regexp: '^(SystemGroup lpadmin)$'
+    replace: '\1 root'
