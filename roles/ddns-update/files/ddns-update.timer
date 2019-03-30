@@ -3,7 +3,7 @@ Description=Update ddns IP-address
 
 [Timer]
 OnBootSec=0
-OnUnitActiveSec=15min
+OnUnitActiveSec=20min
 AccuracySec=3min
 
 
