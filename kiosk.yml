@@ -11,7 +11,8 @@
     wifi_passwd: "YOUR WIFI-PW HERE"
     extra_pkgs:
       - unattended-upgrades
-      - xul-ext-ublock-origin
+      - webext-privacy-badger
+      - webext-ublock-origin
     extra_pkgs_bpo:
       - libreoffice
 
