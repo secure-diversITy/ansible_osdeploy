@@ -1,8 +1,5 @@
 [org/gnome/shell]
-enabled-extensions=['apps-menu@gnome-shell-extensions.gcampax.github.com', 'window-list@gnome-shell-extensions.gcampax.github.com']
-
-[org/gnome/desktop/background]
-show-desktop-icons=true
+enabled-extensions=['apps-menu@gnome-shell-extensions.gcampax.github.com', 'window-list@gnome-shell-extensions.gcampax.github.com', 'places-menu@gnome-shell-extensions.gcampax.github.com', 'drive-menu@gnome-shell-extensions.gcampax.github.com']
 
 [org/gnome/desktop/input-sources]
 sources=[('xkb', 'tr'), ('xkb', 'de'), ('xkb', 'us')]
@@ -14,9 +11,6 @@ button-layout='appmenu:minimize,maximize,close'
 natural-scroll=false
 edge-scrolling-enabled=true
 tap-to-click=true
-
-[org/gnome/nautilus/desktop]
-home-icon-visible=false
 
 [org/gnome/nautilus/preferences]
 default-folder-viewer='list-view'

@@ -11,9 +11,9 @@
     autoremove: yes
 
 - name: install some packages
-  apt: name={{ item }} state=latest
-  with_items:
-    - etckeeper
+  apt:
+    name: etckeeper
+    state: latest
 
 #- name: clean apt package cache
 #  command: apt clean

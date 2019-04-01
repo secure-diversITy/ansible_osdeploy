@@ -6,6 +6,7 @@
   remote_user: ansible
   become: yes
   vars:
+    deb_release: "buster"
     auto_user: debi
     wifi_ssid: "YOUR SSID HERE"
     wifi_passwd: "YOUR WIFI-PW HERE"
@@ -13,8 +14,8 @@
       - unattended-upgrades
       - webext-privacy-badger
       - webext-ublock-origin
-    extra_pkgs_bpo:
-      - libreoffice
+
+    extra_pkgs_bpo: []  #[ libreoffice ]
 
   roles:
     - up2date-debian
