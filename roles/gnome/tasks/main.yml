@@ -3,7 +3,10 @@
 
 - name: gnome desktop
   apt:
-    name: task-gnome-desktop
+    name:
+      - task-gnome-desktop
+      - gnome-shell-extension-desktop-icons
+      - cups
     state: latest
 
 - name: make sure /etc/dconf/profile/ exists

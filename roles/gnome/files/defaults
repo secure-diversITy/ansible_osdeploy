@@ -1,5 +1,5 @@
 [org/gnome/shell]
-enabled-extensions=['apps-menu@gnome-shell-extensions.gcampax.github.com', 'window-list@gnome-shell-extensions.gcampax.github.com', 'places-menu@gnome-shell-extensions.gcampax.github.com', 'drive-menu@gnome-shell-extensions.gcampax.github.com']
+enabled-extensions=['apps-menu@gnome-shell-extensions.gcampax.github.com', 'window-list@gnome-shell-extensions.gcampax.github.com', 'places-menu@gnome-shell-extensions.gcampax.github.com', 'drive-menu@gnome-shell-extensions.gcampax.github.com', 'desktop-icons@csoriano']
 
 [org/gnome/desktop/input-sources]
 sources=[('xkb', 'tr'), ('xkb', 'de'), ('xkb', 'us')]
@@ -27,3 +27,7 @@ sleep-inactive-ac-type='suspend'
 
 [org/gnome/desktop/screensaver]
 lock-enabled=false
+
+[org/gnome/desktop/interface]
+clock-show-date=true
+clock-show-seconds=true
