@@ -27,9 +27,16 @@
     dest: /etc/dconf/db/local.d/defaults
   notify: update dconf
 
-## Bug #698504  
+## Bug #698504
 - name: allow print job management
   replace:
     dest: "/etc/cups/cups-files.conf"
     regexp: '^(SystemGroup lpadmin)$'
     replace: '\1 root'
+
+- name: enable splash screen
+  replace:
+    dest: "/etc/default/grub"
+    regexp: '"quiet"$'
+    replace: '"quiet splash"'
+  notify: update grub
