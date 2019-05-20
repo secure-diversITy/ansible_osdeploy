@@ -31,10 +31,10 @@
     line: 'AutomaticLogin = {{ auto_user }}'
 
 - name: graphics quirk
-  when: ansible_product_name == "HP 500"
+  when: ansible_product_name == "HP 500" or ansible_product_name == "HP 550"
   lineinfile:
     dest: /etc/default/grub
-    regexp: '^(GRUB_CMDLINE_LINUX_DEFAULT=).*'
+    regexp: '^(GRUB_CMDLINE_LINUX=)""'
     line: '\1"video=SVIDEO-1:d"'
     backrefs: yes
   notify: update grub
