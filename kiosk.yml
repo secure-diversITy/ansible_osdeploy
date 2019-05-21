@@ -11,10 +11,9 @@
     wifi_ssid: "YOUR SSID HERE"
     wifi_passwd: "YOUR WIFI-PW HERE"
     extra_pkgs:
-      - unattended-upgrades
       - webext-privacy-badger
       - webext-ublock-origin
-    extra_pkgs_bpo: []  #[ libreoffice ]
+    extra_pkgs_bpo: []  # [ libreoffice ]
 
   roles:
     - up2date-debian
