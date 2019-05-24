@@ -14,7 +14,8 @@
     tftp_root: "/var/lib/tftpboot"
     deb_mirror: "deb.debian.org"
     di_dist: "buster"
-    di_pkg: debian-installer-10-netboot-amd64
+    di_version: "10"
+    di_pkg: "debian-installer-{{ di_version }}-netboot-amd64"
     ansible_user: ansible
     repo_dir: "/home/{{ ansible_user }}/kiosk"
 
