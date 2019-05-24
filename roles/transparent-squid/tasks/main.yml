@@ -9,7 +9,6 @@
     line: "{{ item.line }}"
     insertafter: "{{ item.insertafter }}"
   with_items:
-    - { line: "acl localnet src 192.168.0.0/16", insertafter: "#acl localnet src 192.168.0.0/16" }
     - { line: "http_access allow localnet", insertafter: "#http_access allow localnet" }
     - { line: "http_port 3129 intercept", insertafter: "http_port 3128" }
     - { line: "maximum_object_size_in_memory 10240 KB", insertafter: "# maximum_object_size_in_memory" }

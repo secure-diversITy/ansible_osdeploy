@@ -71,10 +71,3 @@
     replace: '\1all\2'
     backup: yes
   notify: restart shorewall
-
-- name: enable shorewall in /etc/defaults/shorewall
-  replace:
-    dest: /etc/default/shorewall
-    regexp: 'startup=0'
-    replace: 'startup=1'
-  notify: restart shorewall
