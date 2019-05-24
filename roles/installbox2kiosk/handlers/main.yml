@@ -1,7 +1,7 @@
-- name: reload xinetd
+- name: start git-repo
   systemd:
     daemon_reload: yes
-    name: xinetd
-    state: reloaded
+    name: git-repo
+    state: started
     enabled: yes
-  listen: reload xinetd
+  listen: start git-repo

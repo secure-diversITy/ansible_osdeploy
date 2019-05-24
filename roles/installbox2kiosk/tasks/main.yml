@@ -70,12 +70,8 @@
     update: no
   become_user: "ansible"
 
-- name: install xinetd
-  apt:
-    name: xinetd
-
-- name: enable git repo
+- name: start git-repo
   template:
     src: git-repo.j2
-    dest: "/etc/xinetd.d/git-repo"
-  notify: "reload xinetd"
+    dest: "/etc/systemd/system/git-repo.service"
+  notify: start git-repo

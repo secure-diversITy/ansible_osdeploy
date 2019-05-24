@@ -1,12 +1,18 @@
-# Access to git repository.
-service git
-{
-        disable = no
-        type            = UNLISTED
-        port            = 9418
-        socket_type     = stream
-        wait            = no
-        user            = nobody
-        server          = /usr/bin/git
-        server_args     = daemon --inetd --export-all --base-path={{ repo_dir }}
-}
+[Unit]
+Description=Start Git Daemon
+
+[Service]
+ExecStart=/usr/bin/git daemon --reuseaddr --export-all --base-path={{ repo_dir }}
+
+Restart=always
+RestartSec=500ms
+
+StandardOutput=syslog
+StandardError=syslog
+SyslogIdentifier=git-daemon
+
+User=nobody
+Group=nogroup
+
+[Install]
+WantedBy=multi-user.target
