@@ -60,7 +60,7 @@
       echo "{{ sshpubkey }}" >> /target/home/ansible/.ssh/authorized_keys ; \
       in-target chown -R ansible:ansible /home/ansible/.ssh/ ; \
       in-target chmod -R og= /home/ansible/.ssh/ ; \
-      in-target ansible-pull --verbose --purge --extra-vars="run_in_installer=true" --url=git://{{ hostname }}/.git
+      in-target ansible-pull --verbose --purge --extra-vars="run_in_installer=true" -i localhost, --url=git://{{ hostname }}/.git
     marker: "# {mark} ANSIBLE MANAGED BLOCK preseed/late_command"
 
 - name: provide git repo if not available already
