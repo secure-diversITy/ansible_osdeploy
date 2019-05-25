@@ -3,6 +3,13 @@
     name: dnsmasq
     state: latest
 
+- name: add client hostnames and IP addresses to /etc/hosts
+  lineinfile:
+    dest: /etc/hosts
+    line: "{{ item.1 }}\t{{ 'debian%03d' | format(item.0) }}"
+  with_indexed_items: "{{ dhcp_list }}"
+  notify: "restart dnsmasq"
+
 - name: configure dnsmasq
   template:
     src: dnsmasq-transparent-proxy.j2
