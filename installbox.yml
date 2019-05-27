@@ -13,7 +13,7 @@
     dhcp_range: 192.168.0.50,192.168.0.150,2h
     dhcp_list: "{{ lookup('sequence', 'start=50 end=150 format=192.168.0.%d', wantlist=True) }}"
     tftp_root: "/var/lib/tftpboot"
-    deb_mirror: "deb.debian.org"
+    deb_mirror: "cdn-fastly.deb.debian.org" # SRV records ("deb.debian.org") do not work with squid
     di_dist: "buster"
     di_version: "10"
     di_pkg: "debian-installer-{{ di_version }}-netboot-amd64"

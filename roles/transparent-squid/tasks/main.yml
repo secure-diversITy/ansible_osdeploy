@@ -22,10 +22,6 @@
     insertbefore: "TAG: store_miss"
     block: |
       store_id_program /usr/lib/squid/storeid_file_rewrite /etc/squid/store_id_regex.conf
-      store_id_bypass off
-      acl Ordinary http_status 200-299
-      send_hit deny !Ordinary
-      store_miss deny !Ordinary
     marker: "# {mark} ANSIBLE MANAGED BLOCK store_id"
   notify: "restart squid"
 
