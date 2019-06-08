@@ -10,10 +10,10 @@
     force: no
 
 - name: make the hostname resolvable from the LAN
-  replace:
-    dest: /etc/hosts
-    regexp: '(127.0.1.1\s+){{ hostname }}'
-    replace: '\1localhost\n{{ ipaddr_lan }}	{{ hostname }}'
+  lineinfile:
+    path: /etc/hosts
+    insertafter: '^127.0.1.1'
+    line: '{{ ipaddr_lan }}	{{ hostname }}'
 
 - name: add auto pxe boot entry to di-netboot-assistant
   blockinfile:

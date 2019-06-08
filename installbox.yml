@@ -8,7 +8,7 @@
   vars:
     if_lan: ""           #  ← interface name here, like:  ens3 or enp2s0"
     if_wan: "{{ ansible_default_ipv4.interface }}"
-    hostname: "{{ ansible_hostname }}"
+    hostname: "{{ ansible_hostname }}" # change this to not use the DNS-provided name
     ipaddr_lan: 192.168.0.10
     dhcp_range: 192.168.0.50,192.168.0.150,2h
     dhcp_list: "{{ lookup('sequence', 'start=50 end=150 format=192.168.0.%d', wantlist=True) }}"
@@ -34,3 +34,20 @@
     - tftp-netboot-installer
     - preseed-installer
 #    - installbox2kiosk    #  enable this to install kiosk automatically
+
+  post_tasks:
+    - name: make sure hostname is set correctly in /etc/hosts
+      replace:
+        path: /etc/hosts
+        regexp: '(127.0.1.1\s+){{ ansible_hostname }}(\s+.*)?$'
+        replace: '\1{{ hostname }}\2'
+
+    - name: make sure hostname is set correctly in /etc/hostname
+      replace:
+        path: /etc/hostname
+        regexp: '{{ ansible_hostname }}'
+        replace: '{{ hostname }}'
+
+    - name: set hostname
+      hostname:
+        name: "{{ hostname }}"
