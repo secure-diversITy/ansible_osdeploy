@@ -24,12 +24,12 @@
       LABEL autoinstall
          MENU LABEL Debian {{ di_version }} (amd64) + preseed
          kernel ::/d-i/n-pkg/images/{{ di_version }}/amd64/text/debian-installer/amd64/linux
-         append initrd=::/d-i/n-pkg/images/{{ di_version }}/amd64/text/debian-installer/amd64/initrd.gz --- auto=true priority=critical url=tftp://{{ hostname }}
+         append initrd=::/d-i/n-pkg/images/{{ di_version }}/amd64/text/debian-installer/amd64/initrd.gz auto=true priority=critical url=tftp://{{ hostname }} playbook=kiosk.yml ---
 
          #LABEL daily
          #MENU LABEL Debian daily (amd64) + preseed
          #kernel ::/d-i/n-a/daily/amd64/linux
-         #append initrd=::/d-i/n-a/daily/amd64/initrd.gz --- auto=true priority=critical url=tftp://{{ hostname }}
+         #append initrd=::/d-i/n-a/daily/amd64/initrd.gz auto=true priority=critical url=tftp://{{ hostname }} playbook=kiosk.yml ---
   notify: "rebuild di-netboot-assistant menu"
 
 - name: add auto efi boot entry to di-netboot-assistant
@@ -38,12 +38,12 @@
     insertbefore: EOF
     block: |
       menuentry 'Debian {{ di_version }} (amd64) + preseed' {
-         linux   /d-i/n-pkg/images/{{ di_version }}/amd64/text/debian-installer/amd64/linux --- auto=true priority=critical url=tftp://{{ hostname }}
+         linux   /d-i/n-pkg/images/{{ di_version }}/amd64/text/debian-installer/amd64/linux auto=true priority=critical url=tftp://{{ hostname }} playbook=kiosk.yml ---
          initrd  /d-i/n-pkg/images/{{ di_version }}/amd64/text/debian-installer/amd64/initrd.gz
       }
 
       #menuentry 'Debian daily (amd64) + preseed' {
-      #   linux   /d-i/n-a/daily/amd64/linux --- auto=true priority=critical url=tftp://{{ hostname }}
+      #   linux   /d-i/n-a/daily/amd64/linux auto=true priority=critical url=tftp://{{ hostname }} playbook=kiosk.yml ---
       #   initrd  /d-i/n-a/daily/amd64/initrd.gz
       #}
   notify: "rebuild di-netboot-assistant menu"

@@ -61,7 +61,7 @@
       in-target chown -R ansible:ansible /home/ansible/.ssh/ ; \
       in-target chmod -R og= /home/ansible/.ssh/ ; \
       in-target ansible-pull --verbose --purge --extra-vars="run_in_installer=true" \
-                             -i localhost, --url=git://{{ hostname }}/.git
+                             -i localhost, --url=git://{{ hostname }}/.git $playbook
     marker: "# {mark} ANSIBLE MANAGED BLOCK preseed/late_command"
 
 - name: provide git repo if not available already

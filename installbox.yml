@@ -33,7 +33,7 @@
     - transparent-squid
     - tftp-netboot-installer
     - preseed-installer
-#    - installbox2kiosk    #  enable this to install kiosk automatically
+    - installbox2kiosk
 
   post_tasks:
     - name: make sure hostname is set correctly in /etc/hosts
