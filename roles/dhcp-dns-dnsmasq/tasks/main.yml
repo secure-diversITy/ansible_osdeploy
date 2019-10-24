@@ -12,6 +12,6 @@
 
 - name: configure dnsmasq
   template:
-    src: dnsmasq-transparent-proxy.j2
-    dest: /etc/dnsmasq.d/transparent-proxy
+    src: dnsmasq-dhcp.j2
+    dest: /etc/dnsmasq.d/dnsmasq-dhcp
   notify: "restart dnsmasq"

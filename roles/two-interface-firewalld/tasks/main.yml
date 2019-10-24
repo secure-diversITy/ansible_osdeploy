@@ -1,0 +1,69 @@
+- name: add if_lan with static address
+  template:
+    src: interfaces-static.j2
+    dest: /etc/network/interfaces.d/static
+  notify: "restart networking"
+
+- name: install firewalld package
+  apt: name=firewalld state=latest
+  notify: "start firewalld"
+
+- meta: flush_handlers
+
+
+## Do not run the following in the installer:
+
+- name: add WAN interface to zone public
+  firewalld:
+    zone: public
+    interface: "{{ if_wan }}"
+    permanent: yes
+    state: enabled
+  when: not run_in_installer|default(false)|bool
+
+- name: enable masquerading
+  firewalld:
+    zone: public
+    masquerade: yes
+    permanent: yes
+    state: enabled
+  when: not run_in_installer|default(false)|bool
+
+- name: add LAN interface to zone intern
+  firewalld:
+    zone: internal
+    interface: "{{ if_lan }}"
+    permanent: yes
+    state: enabled
+  when: not run_in_installer|default(false)|bool
+
+- name: enable services
+  firewalld:
+    zone: internal
+    service: "{{ item }}"
+    permanent: yes
+    state: enabled
+  with_items:
+    - dhcp
+    - dns
+    - tftp
+    - git
+  when: not run_in_installer|default(false)|bool
+
+## Use firewall-offline-cmd when run during installation:
+
+- name: add WAN interface to zone public
+  command: "firewall-offline-cmd --zone=public --add-interface={{ if_wan }}"
+  when: run_in_installer|default(false)|bool
+
+- name: enable masquerading
+  command: "firewall-offline-cmd --zone=public --add-masquerade"
+  when: run_in_installer|default(false)|bool
+
+- name: add LAN interface to zone intern
+  command: "firewall-offline-cmd --zone=internal --add-interface={{ if_lan }}"
+  when: run_in_installer|default(false)|bool
+
+- name: enable services
+  command: "firewall-offline-cmd --zone=internal --add-service=dhcp --add-service=dns --add-service=tftp --add-service=git"
+  when: run_in_installer|default(false)|bool

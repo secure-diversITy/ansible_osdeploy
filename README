@@ -10,7 +10,7 @@ offers ansible playbooks and instructions for the following machines:
      - set up as gateway to some external network (WAN)
      - providing TFTP installation on the LAN interface
      - automatic installs: preseeding and ansible playbooks
-     - squid package cache
+     - package cache
      use case: orchestration of automatic installs in the LAN
 
  • Kiosk:

@@ -1,0 +1,13 @@
+- name: install apt-cacher-ng package
+  apt:
+    name: apt-cacher-ng
+    state: latest
+
+- name: enable apt-cacher-ng for localhost
+  copy:
+    src: apt.conf
+    dest: /etc/apt/apt.conf
+    backup: yes
+  notify: "start apt-cacher-ng"
+
+- meta: flush_handlers

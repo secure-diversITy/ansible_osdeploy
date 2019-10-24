@@ -6,33 +6,37 @@
   remote_user: ansible
   become: yes
   vars:
-    if_lan: ""           #  ← interface name here, like:  ens3 or enp2s0"
+    ## this interface provides the default route:
     if_wan: "{{ ansible_default_ipv4.interface }}"
-    hostname: "{{ ansible_hostname }}" # change this to not use the DNS-provided name
+    ## use the first remaining interface for the LAN:
+    if_lan: "{{ ansible_interfaces | difference([if_wan, 'lo']) | first}}"
+    ## change this to not use the DNS-provided name:
+    hostname: "{{ ansible_hostname }}"
     ipaddr_lan: 192.168.0.10
     dhcp_range: 192.168.0.50,192.168.0.150,2h
     dhcp_list: "{{ lookup('sequence', 'start=50 end=150 format=192.168.0.%d', wantlist=True) }}"
     tftp_root: "/var/lib/tftpboot"
-    deb_mirror: "cdn-fastly.deb.debian.org" # SRV records ("deb.debian.org") do not work with squid
+    deb_mirror: "deb.debian.org"
     di_dist: "buster"
     di_version: "10"
     di_pkg: "debian-installer-{{ di_version }}-netboot-amd64"
     ansible_user: ansible
     repo_dir: "/home/{{ ansible_user }}/kiosk"
+    ansible_python_interpreter: "/usr/bin/python3"  # needed for firewalld module
 
   pre_tasks:
-    - name: validate if interface is available
+    - name: validate if interfaces are available
       fail:
-        msg: "Interface {{ if_lan }} does not exist or is already used."
-      when: if_lan not in ansible_interfaces or if_lan == if_wan
+        msg: "Interfaces {{ ansible_interfaces }} found. WAN: '{{ if_wan }}', LAN: '{{ if_lan }}'.  Two NICs needed."
+      when: if_lan not in ansible_interfaces or if_wan not in ansible_interfaces or if_lan == if_wan
 
   roles:
     - up2date-debian
-    - two-interface-shorewall
+    - two-interface-firewalld
     - dhcp-dns-dnsmasq
-    - transparent-squid
     - tftp-netboot-installer
     - preseed-installer
+    - apt-cacher
     - installbox2kiosk
 
   post_tasks:
