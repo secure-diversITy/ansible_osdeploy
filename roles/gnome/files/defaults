@@ -2,7 +2,7 @@
 enabled-extensions=['apps-menu@gnome-shell-extensions.gcampax.github.com', 'window-list@gnome-shell-extensions.gcampax.github.com', 'places-menu@gnome-shell-extensions.gcampax.github.com', 'drive-menu@gnome-shell-extensions.gcampax.github.com', 'desktop-icons@csoriano']
 
 [org/gnome/desktop/input-sources]
-sources=[('xkb', 'tr'), ('xkb', 'de'), ('xkb', 'us')]
+sources=[('xkb', 'de'), ('xkb', 'us')]
 
 [org/gnome/desktop/wm/preferences]
 button-layout='appmenu:minimize,maximize,close'
