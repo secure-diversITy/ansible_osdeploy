@@ -6,11 +6,11 @@
   remote_user: ansible
   become: yes
   vars:
-    ## this interface provides the default route:
+    ## This interface provides the default route:
     if_wan: "{{ ansible_default_ipv4.interface }}"
-    ## use the first remaining interface for the LAN:
+    ## Use the first remaining interface for the LAN:
     if_lan: "{{ ansible_interfaces | difference([if_wan, 'lo']) | first}}"
-    ## change this to not use the DNS-provided name:
+    ## Add 'hostname=XXX' to the installer boot parameters if necessary:
     hostname: "{{ ansible_hostname }}"
     ipaddr_lan: 192.168.0.10
     dhcp_range: 192.168.0.50,192.168.0.150,2h
@@ -38,20 +38,3 @@
     - preseed-installer
     - apt-cacher
     - installbox2kiosk
-
-  post_tasks:
-    - name: make sure hostname is set correctly in /etc/hosts
-      replace:
-        path: /etc/hosts
-        regexp: '(127.0.1.1\s+){{ ansible_hostname }}(\s+.*)?$'
-        replace: '\1{{ hostname }}\2'
-
-    - name: make sure hostname is set correctly in /etc/hostname
-      replace:
-        path: /etc/hostname
-        regexp: '{{ ansible_hostname }}'
-        replace: '{{ hostname }}'
-
-    - name: set hostname
-      hostname:
-        name: "{{ hostname }}"
