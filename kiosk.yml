@@ -17,5 +17,7 @@
 
   roles:
     - up2date-debian
+    ## Choose either gnome or KDE:
     - gnome
+    #- kde
     - kiosk

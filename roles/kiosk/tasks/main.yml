@@ -12,23 +12,50 @@
   apt: name={{ extra_pkgs_bpo }} state=latest default_release={{ deb_release }}-backports
   when: extra_pkgs_bpo|length
 
+## Check which display manager is used:
 - name: check if gdm3 is installed
   stat: path=/etc/gdm3/daemon.conf
   register: gdm3
 
-- name: enable auto login
+- name: check if sddm is installed
+  stat: path=/usr/bin/sddm
+  register: sddm
+
+## gdm3:
+- name: enable auto login in gdm3
   when: gdm3.stat.exists == true
   lineinfile:
     dest: /etc/gdm3/daemon.conf
     insertafter: '^#\s*AutomaticLoginEnable = true'
     line: 'AutomaticLoginEnable = true'
 
-- name: auto login user
+- name: auto login user in gdm3
   when: gdm3.stat.exists == true
   lineinfile:
     dest: /etc/gdm3/daemon.conf
     insertafter: '^#\s*AutomaticLogin = '
     line: 'AutomaticLogin = {{ auto_user }}'
+
+## sddm/KDE:
+- name: enable auto login in sddm
+  when: sddm.stat.exists == true
+  template:
+    src: sddm.conf.j2
+    dest: /etc/sddm.conf
+
+- name: kde global defaults
+  when: sddm.stat.exists == true
+  copy:
+    src: kde5rc
+    dest: /etc/kde5rc
+
+- name: modify kde screen lock
+  when: sddm.stat.exists == true
+  copy:
+    src: kscreenlockerrc
+    dest: /etc/xdg/kscreenlockerrc
+
+########
 
 - name: graphics quirk
   when: ansible_product_name == "HP 500" or ansible_product_name == "HP 550"

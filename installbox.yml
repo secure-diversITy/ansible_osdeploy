@@ -9,7 +9,7 @@
     ## This interface provides the default route:
     if_wan: "{{ ansible_default_ipv4.interface }}"
     ## Use the first remaining interface for the LAN:
-    if_lan: "{{ ansible_interfaces | difference([if_wan, 'lo']) | first}}"
+    if_lan: "{{ ansible_interfaces | difference([if_wan, 'lo']) | first }}"
     ## Add 'hostname=XXX' to the installer boot parameters if necessary:
     hostname: "{{ ansible_hostname }}"
     ipaddr_lan: 192.168.0.10
@@ -28,7 +28,7 @@
     - name: validate if interfaces are available
       fail:
         msg: "Interfaces {{ ansible_interfaces }} found. WAN: '{{ if_wan }}', LAN: '{{ if_lan }}'.  Two NICs needed."
-      when: if_lan not in ansible_interfaces or if_wan not in ansible_interfaces or if_lan == if_wan
+      when: (if_lan not in ansible_interfaces) or (if_wan not in ansible_interfaces) or (if_lan == if_wan)
 
   roles:
     - up2date-debian

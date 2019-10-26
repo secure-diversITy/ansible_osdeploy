@@ -1,0 +1,21 @@
+- name: kde plasma desktop
+  apt:
+    name:
+      - task-kde-desktop
+      - cups
+    state: latest
+
+    
+## Bug #698504
+- name: allow print job management
+  replace:
+    dest: "/etc/cups/cups-files.conf"
+    regexp: '^(SystemGroup lpadmin)$'
+    replace: '\1 root'
+
+- name: enable splash screen
+  replace:
+    dest: "/etc/default/grub"
+    regexp: '"quiet"$'
+    replace: '"quiet splash"'
+  notify: update grub
