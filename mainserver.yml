@@ -9,6 +9,6 @@
     foo_pwd: 123
     
   roles:
-    - ldap
-#    - krb5-kdc-ldap
+#    - ldap
+    - krb5-kdc-ldap
 

@@ -1,0 +1,146 @@
+## Install and configure krb5-kdc-ldap (if not done yet),
+##  run most tasks only on krb5-kdc-ldap installation.
+---
+
+- name: check if slapd is already there
+  stat: path=/usr/sbin/krb5kdc
+  register: krb5kdc
+
+- name: prepare krb5.conf
+  template:
+    src: krb5.conf
+    dest: /etc/krb5.conf
+
+- name: prepare kdc.conf
+  template:
+    src: kdc.conf
+    dest: /etc/krb5kdc/kdc.conf
+
+- name: prepare kadm5.acl
+  template:
+    src: kadm5.acl
+    dest: /etc/krb5kdc/kadm5.acl
+  notify: "restart krb5-admin-server"
+
+- name: install krb5-kdc-ldap and krb5-admin-server
+  apt:
+    name:
+      - krb5-kdc-ldap
+      - krb5-admin-server
+    state: latest
+
+- name: prepare kerberos.openldap.ldif
+  shell: gunzip -c /usr/share/doc/krb5-kdc-ldap/kerberos.openldap.ldif.gz > /etc/ldap/schema/kerberos.openldap.ldif
+  when: not krb5kdc.stat.exists
+
+- name: activate kerberos.openldap.ldif schema
+  command: ldapadd  -Y EXTERNAL -H ldapi:/// -f /etc/ldap/schema/kerberos.openldap.ldif
+  when: not krb5kdc.stat.exists
+
+- name: make sure we have a kerberos container
+  ldap_entry:
+    dn: "cn=kerberos,{{ basedn }}"
+    objectClass: krbContainer
+    bind_dn: "cn=admin,{{ basedn }}"
+    bind_pw: "{{ ldap_admin_pwd }}"
+  when: not krb5kdc.stat.exists
+
+- name: make sure we have a kdc object
+  ldap_entry:
+    dn: "cn=kdc,cn=kerberos,{{ basedn }}"
+    objectClass:
+      - organizationalRole
+      - simpleSecurityObject
+    attributes:
+      userPassword: "{{ kdc_pwd }}"
+    bind_dn: "cn=admin,{{ basedn }}"
+    bind_pw: "{{ ldap_admin_pwd }}"
+  when: not krb5kdc.stat.exists
+
+- name: make sure we have a kadmin object
+  ldap_entry:
+    dn: "cn=kadmin,cn=kerberos,{{ basedn }}"
+    objectClass:
+      - organizationalRole
+      - simpleSecurityObject
+    attributes:
+      userPassword: "{{ kadmin_pwd }}"
+    bind_dn: "cn=admin,{{ basedn }}"
+    bind_pw: "{{ ldap_admin_pwd }}"
+  when: not krb5kdc.stat.exists
+
+- name: modify ACLs to account for KDC
+  ldap_attr:
+    dn: "olcDatabase={1}mdb,cn=config"
+    name: olcAccess
+    values:
+      - >-
+        to attrs=userPassword
+        by self write
+        by anonymous auth
+        by * none
+      - >-
+        to attrs=shadowLastChange
+        by self write
+        by * read
+      - >-
+        to dn.subtree="cn=kerberos,{{ basedn }}"
+        by dn.exact="cn=kdc,cn=kerberos,{{ basedn }}" read
+        by dn.exact="cn=kadmin,cn=kerberos,{{ basedn }}" write
+        by * none
+      - >-
+        to attrs=krbPrincipalName,krbLastPwdChange,krbPrincipalKey,krbExtraData
+        by dn.exact="cn=kdc,cn=kerberos,{{ basedn }}" read
+        by dn.exact="cn=kadmin,cn=kerberos,{{ basedn }}" write
+        by self read
+        by * auth
+      - >-
+        to *
+        by dn.exact="cn=kadmin,cn=kerberos,{{ basedn }}" write
+        by * read
+    state: exact
+  when: not krb5kdc.stat.exists
+
+- name: add KDC indexes to LDAP
+  ldap_attr:
+    dn: "olcDatabase={1}mdb,cn=config"
+    name: olcDbIndex
+    values: krbPrincipalName pres,sub,eq
+  when: not krb5kdc.stat.exists
+
+- name: prepare password for kdc
+  shell: echo "cn=kdc,cn=kerberos,{{ basedn }}#{HEX}$(echo -n {{ kdc_pwd }} | xxd -g0 -ps | sed 's/0a$//')" > /etc/krb5kdc/service.keyfile
+  no_log: true
+  when: not krb5kdc.stat.exists
+
+- name: prepare password for kadmin
+  shell: echo "cn=kadmin,cn=kerberos,{{ basedn }}#{HEX}$(echo -n {{ kadmin_pwd }} | xxd -g0 -ps | sed 's/0a$//')" >> /etc/krb5kdc/service.keyfile
+  no_log: true
+  when: not krb5kdc.stat.exists
+
+- name: dump kdc master password
+  shell: echo -n "{{ kdc_master_pwd }}" > "{{ kdc_pwd_file }}" ; chmod 0600 "{{ kdc_pwd_file }}"
+  no_log: true
+  when: not krb5kdc.stat.exists
+
+- name: initialize KDC
+  command:
+    >-
+      kdb5_ldap_util
+      -D cn=admin,"{{ basedn }}"
+      -w "{{ ldap_admin_pwd }}"
+      -H ldapi:///
+      create -s -subtrees "{{ basedn }}"
+      -P "{{ kdc_master_pwd }}"
+      -r "{{ ldap_domain | upper }}"
+  no_log: true
+  notify: "restart krb5-kdc"
+  when: not krb5kdc.stat.exists
+
+- name: add default policy to silence warning when using kadmin
+  command: kadmin.local -q "add_policy default"
+  when: not krb5kdc.stat.exists
+
+- name: kerberize dummy user foo
+  command: kadmin.local -q 'add_principal -pw {{ foo_pwd }} -x dn="uid=foo,ou=people,{{ basedn }}" foo'
+  when: foo_pwd is defined

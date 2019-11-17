@@ -1,0 +1,5 @@
+---
+kdc_pwd: "{{ lookup('password', '/tmp/kdc.pwd length=24') }}"
+kadmin_pwd: "{{ lookup('password', '/tmp/kadmin.pwd length=24') }}"
+kdc_master_pwd: "{{ lookup('password', '/tmp/kdc_master.pwd length=24') }}"
+kdc_pwd_file: "/root/kdc-master.pwd"
