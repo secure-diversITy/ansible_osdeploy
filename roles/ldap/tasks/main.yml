@@ -90,7 +90,7 @@
       userPassword: "{{ foo_pwd }}"
       uidNumber: 10000
       gidNumber: 10000
-      homeDirectory: /home/foo
+      homeDirectory: /home/lan/foo
     bind_dn: "cn=admin,{{ basedn }}"
     bind_pw: "{{ ldap_admin_pwd }}"
   when: foo_pwd is defined

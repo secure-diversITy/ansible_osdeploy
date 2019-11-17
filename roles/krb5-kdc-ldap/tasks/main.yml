@@ -8,17 +8,17 @@
 
 - name: prepare krb5.conf
   template:
-    src: krb5.conf
+    src: krb5.conf.j2
     dest: /etc/krb5.conf
 
 - name: prepare kdc.conf
   template:
-    src: kdc.conf
+    src: kdc.conf.j2
     dest: /etc/krb5kdc/kdc.conf
 
 - name: prepare kadm5.acl
   template:
-    src: kadm5.acl
+    src: kadm5.acl.j2
     dest: /etc/krb5kdc/kadm5.acl
   notify: "restart krb5-admin-server"
 
@@ -139,6 +139,14 @@
 
 - name: add default policy to silence warning when using kadmin
   command: kadmin.local -q "add_policy default"
+  when: not krb5kdc.stat.exists
+
+- name: create machine principal
+  command: kadmin.local -q "addprinc -randkey host/{{ ansible_hostname }}.{{ ldap_domain }}"
+  when: not krb5kdc.stat.exists
+
+- name: add principal to the keytab
+  command: kadmin.local -q "ktadd host/{{ ansible_hostname }}.{{ ldap_domain }}"
   when: not krb5kdc.stat.exists
 
 - name: kerberize dummy user foo
