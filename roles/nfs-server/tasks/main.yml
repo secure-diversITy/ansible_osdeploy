@@ -1,0 +1,65 @@
+## Install and configure nfs-server
+---
+- name: check if there are installing
+  stat: path=/etc/exports
+  register: exports
+
+- name: install nfs-kernel-server
+  apt:
+    name:
+      - nfs-kernel-server
+    state: latest
+
+- name: make sure the export exists
+  file: path={{ export_root }}/home/ state=directory recurse=yes
+
+- name: make sure the export exists
+  file: path={{ export_dir }} state=directory recurse=yes
+
+- name: bind mount exported dir
+  mount:
+    path: "{{ export_root }}/home/"
+    src: "{{ export_dir }}"
+    fstype: none
+    state: mounted
+    opts: bind
+
+- name: configure exports
+  blockinfile:
+    dest: /etc/exports
+    insertbefore: EOF
+    block: |
+      {{ export_root }}         *(sec=krb5p:krb5i:krb5:sys,rw,fsid=0,crossmnt,no_subtree_check)
+      {{ export_root }}/home/   *(sec=krb5p:krb5i,rw,no_subtree_check)
+  notify: "restart nfs-kernel-server"
+
+
+
+- name: check if there is a local kadmin
+  stat: path=/usr/sbin/kadmin.local
+  register: kadmin
+
+- name: create machine principal
+  command: kadmin.local -q "addprinc -randkey nfs/{{ ansible_hostname }}.{{ ansible_domain }}"
+  when: kadmin.stat.exists and not exports.stat.exists
+
+- name: add principal to the keytab
+  command: kadmin.local -q "ktadd nfs/{{ ansible_hostname }}.{{ ansible_domain }}"
+  notify: "restart rpc-svcgssd"
+  when: kadmin.stat.exists and not exports.stat.exists
+
+- name: install sssd-krb5
+  apt:
+    name:
+      - sssd-krb5
+      - sssd-ldap
+    state: latest
+  when: kadmin.stat.exists
+
+- name: provide identities from directory
+  template:
+    src: sssd.conf.j2
+    dest: /etc/sssd/sssd.conf
+    mode: 0600
+  notify: restart sssd
+  when: kadmin.stat.exists
