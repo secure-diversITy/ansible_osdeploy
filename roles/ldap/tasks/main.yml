@@ -1,0 +1,110 @@
+## Install and configure slapd (if not done yet),
+##  run most tasks only on slapd installation.
+---
+
+- name: check if slapd is already there
+  stat: path=/usr/sbin/slapd
+  register: slapd
+
+- name: preseed ldap domain
+  debconf:
+    name: slapd
+    question:  slapd/domain
+    value: "{{ ldap_domain }}"
+    vtype: string
+  when: not slapd.stat.exists
+
+- name: preseed slapd admin password1
+  debconf:
+    name: slapd
+    question: slapd/password1
+    value: "{{ ldap_admin_pwd }}"
+    vtype: password
+  no_log: true
+  when: not slapd.stat.exists
+
+- name: preseed slapd admin password2
+  debconf:
+    name: slapd
+    question: slapd/password2
+    value: "{{ ldap_admin_pwd }}"
+    vtype: password
+  no_log: true
+  when: not slapd.stat.exists
+
+- name: dump admin password
+  shell: echo -n "{{ ldap_admin_pwd }}" > "{{ ldap_pwd_file }}" ; chmod 0600 "{{ ldap_pwd_file }}"
+  no_log: true
+  when: not slapd.stat.exists
+
+- name: install slapd and python-ldap
+  apt:
+    name:
+      - slapd
+      - python-ldap
+    state: latest
+
+- name: make initial slapd configuration available
+  copy:
+    src: slapd-config.ldif
+    dest: /etc/ldap/slapd.d/slapd-config.ldif
+  when: not slapd.stat.exists
+
+- name: activate ppolicy schema
+  command: ldapadd  -Y EXTERNAL -H ldapi:/// -f /etc/ldap/schema/ppolicy.ldif
+  when: not slapd.stat.exists
+
+- name: initialize slapd if it has just been installed
+  command: ldapadd  -Y EXTERNAL -H ldapi:/// -f /etc/ldap/slapd.d/slapd-config.ldif
+  when: not slapd.stat.exists
+
+
+#######################################################################################
+
+## Prepare user directories
+- name: make sure we have a people entry for users
+  ldap_entry:
+    dn: "ou=people,{{ basedn }}"
+    objectClass: organizationalUnit
+    bind_dn: "cn=admin,{{ basedn }}"
+    bind_pw: "{{ ldap_admin_pwd }}"
+
+- name: make sure we have a group entry for users
+  ldap_entry:
+    dn: "ou=groups,{{ basedn }}"
+    objectClass: organizationalUnit
+    bind_dn: "cn=admin,{{ basedn }}"
+    bind_pw: "{{ ldap_admin_pwd }}"
+
+
+## Add user
+- name: add dummy user foo
+  ldap_entry:
+    dn: "uid=foo,ou=people,{{ basedn }}"
+    objectClass:
+      - inetOrgPerson
+      - posixAccount
+    attributes:
+      cn: foo
+      sn: bar
+      userPassword: "{{ foo_pwd }}"
+      uidNumber: 10000
+      gidNumber: 10000
+      homeDirectory: /home/foo
+    bind_dn: "cn=admin,{{ basedn }}"
+    bind_pw: "{{ ldap_admin_pwd }}"
+  when: foo_pwd is defined
+
+- name: add dummy group foo
+  ldap_entry:
+    dn: "cn=foo,ou=groups,{{ basedn }}"
+    objectClass:
+      - posixGroup
+    attributes:
+      gidNumber: 10000
+    bind_dn: "cn=admin,{{ basedn }}"
+    bind_pw: "{{ ldap_admin_pwd }}"
+  when: foo_pwd is defined
+
+## ldapaddgroup tom
+## ldapadduser tom tom

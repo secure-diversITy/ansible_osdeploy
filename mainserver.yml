@@ -1,0 +1,14 @@
+---
+# This playbook deploys the mainserver
+
+- name: apply configuration to the mainserver
+  hosts: all
+  remote_user: andi
+  become: yes
+  vars:
+    foo_pwd: 123
+    
+  roles:
+    - ldap
+#    - krb5-kdc-ldap
+
