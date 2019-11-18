@@ -14,12 +14,12 @@
   file: path={{ export_root }}/home/ state=directory recurse=yes
 
 - name: make sure the export exists
-  file: path={{ export_dir }} state=directory recurse=yes
+  file: path={{ lan_homes }} state=directory recurse=yes
 
 - name: bind mount exported dir
   mount:
     path: "{{ export_root }}/home/"
-    src: "{{ export_dir }}"
+    src: "{{ lan_homes }}"
     fstype: none
     state: mounted
     opts: bind
@@ -40,11 +40,11 @@
   register: kadmin
 
 - name: create machine principal
-  command: kadmin.local -q "addprinc -randkey nfs/{{ ansible_hostname }}.{{ ansible_domain }}"
+  command: kadmin.local -q "addprinc -randkey nfs/{{ ansible_hostname }}.{{ ldap_domain }}"
   when: kadmin.stat.exists and not exports.stat.exists
 
 - name: add principal to the keytab
-  command: kadmin.local -q "ktadd nfs/{{ ansible_hostname }}.{{ ansible_domain }}"
+  command: kadmin.local -q "ktadd nfs/{{ ansible_hostname }}.{{ ldap_domain }}"
   notify: "restart rpc-svcgssd"
   when: kadmin.stat.exists and not exports.stat.exists
 

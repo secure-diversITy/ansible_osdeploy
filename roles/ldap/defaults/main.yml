@@ -2,3 +2,4 @@ ldap_admin_pwd: "{{ lookup('password', '/tmp/ldap_admin.pwd length=24') }}"
 ldap_pwd_file: "/root/ldap-admin.pwd"
 ldap_domain: "{{ ansible_domain | default('intern', true) }}"
 basedn: "{{ 'dc=' + ( ldap_domain | replace('^.','') | replace('.$','') | replace('.',',dc=')) }}"
+lan_homes:  /home/lan

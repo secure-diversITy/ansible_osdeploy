@@ -1,3 +1,7 @@
+- name: check if dnsmasq is already there
+  stat: path=/etc/dnsmasq.d/dnsmasq-dhcp
+  register: dnsmasq
+
 - name: install dnsmasq package
   apt:
     name: dnsmasq
@@ -9,6 +13,7 @@
     line: "{{ item.1 }}\t{{ 'debian%03d' | format(item.0) }}"
   with_indexed_items: "{{ dhcp_list }}"
   notify: "restart dnsmasq"
+  when: not dnsmasq.stat.exists
 
 - name: configure dnsmasq
   template:

@@ -37,11 +37,13 @@
   no_log: true
   when: not slapd.stat.exists
 
-- name: install slapd and python-ldap
+- name: install slapd, ldap-utils, ldapvi and python3-ldap
   apt:
     name:
       - slapd
-      - python-ldap
+      - ldap-utils
+      - ldapvi
+      - python3-ldap
     state: latest
 
 - name: make initial slapd configuration available
@@ -90,7 +92,7 @@
       userPassword: "{{ foo_pwd }}"
       uidNumber: 10000
       gidNumber: 10000
-      homeDirectory: /home/lan/foo
+      homeDirectory: "{{ lan_homes }}/foo"
     bind_dn: "cn=admin,{{ basedn }}"
     bind_pw: "{{ ldap_admin_pwd }}"
   when: foo_pwd is defined

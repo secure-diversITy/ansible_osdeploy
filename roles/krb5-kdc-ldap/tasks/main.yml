@@ -11,6 +11,9 @@
     src: krb5.conf.j2
     dest: /etc/krb5.conf
 
+- name: make sure krb5kdc exists
+  file: path=/etc/krb5kdc state=directory recurse=yes
+
 - name: prepare kdc.conf
   template:
     src: kdc.conf.j2
@@ -52,7 +55,7 @@
       - organizationalRole
       - simpleSecurityObject
     attributes:
-      userPassword: "{{ kdc_pwd }}"
+      userPassword: "{{ kdc_service_pwd }}"
     bind_dn: "cn=admin,{{ basedn }}"
     bind_pw: "{{ ldap_admin_pwd }}"
   when: not krb5kdc.stat.exists
@@ -64,7 +67,7 @@
       - organizationalRole
       - simpleSecurityObject
     attributes:
-      userPassword: "{{ kadmin_pwd }}"
+      userPassword: "{{ kadmin_service_pwd }}"
     bind_dn: "cn=admin,{{ basedn }}"
     bind_pw: "{{ ldap_admin_pwd }}"
   when: not krb5kdc.stat.exists
@@ -109,17 +112,17 @@
   when: not krb5kdc.stat.exists
 
 - name: prepare password for kdc
-  shell: echo "cn=kdc,cn=kerberos,{{ basedn }}#{HEX}$(echo -n {{ kdc_pwd }} | xxd -g0 -ps | sed 's/0a$//')" > /etc/krb5kdc/service.keyfile
+  shell: echo "cn=kdc,cn=kerberos,{{ basedn }}#{HEX}$(echo -n {{ kdc_service_pwd }} | xxd -g0 -ps | sed 's/0a$//')" > /etc/krb5kdc/service.keyfile
   no_log: true
   when: not krb5kdc.stat.exists
 
 - name: prepare password for kadmin
-  shell: echo "cn=kadmin,cn=kerberos,{{ basedn }}#{HEX}$(echo -n {{ kadmin_pwd }} | xxd -g0 -ps | sed 's/0a$//')" >> /etc/krb5kdc/service.keyfile
+  shell: echo "cn=kadmin,cn=kerberos,{{ basedn }}#{HEX}$(echo -n {{ kadmin_service_pwd }} | xxd -g0 -ps | sed 's/0a$//')" >> /etc/krb5kdc/service.keyfile
   no_log: true
   when: not krb5kdc.stat.exists
 
 - name: dump kdc master password
-  shell: echo -n "{{ kdc_master_pwd }}" > "{{ kdc_pwd_file }}" ; chmod 0600 "{{ kdc_pwd_file }}"
+  shell: echo -n "{{ kdc_master_pwd }}" > "{{ kdc_master_pwd_file }}" ; chmod 0600 "{{ kdc_master_pwd_file }}"
   no_log: true
   when: not krb5kdc.stat.exists
 
@@ -137,18 +140,35 @@
   notify: "restart krb5-kdc"
   when: not krb5kdc.stat.exists
 
+- name: add root/admin as kadmin  
+  command: kadmin.local -q "addprinc -pw {{ kadmin_pwd }} root/admin"
+  when: not krb5kdc.stat.exists
+
+- name: dump kadmin password
+  shell: echo -n "{{ kadmin_pwd }}" > "{{ kadmin_pwd_file }}" ; chmod 0600 "{{ kadmin_pwd_file }}"
+  no_log: true
+  when: not krb5kdc.stat.exists
+  
 - name: add default policy to silence warning when using kadmin
   command: kadmin.local -q "add_policy default"
   when: not krb5kdc.stat.exists
 
-- name: create machine principal
-  command: kadmin.local -q "addprinc -randkey host/{{ ansible_hostname }}.{{ ldap_domain }}"
+- name: create machine principals
+  command: kadmin.local -q "addprinc -randkey {{ item }}/{{ ansible_hostname }}.{{ ldap_domain }}"
+  with_items:
+    - host
+    - ldap
   when: not krb5kdc.stat.exists
 
 - name: add principal to the keytab
-  command: kadmin.local -q "ktadd host/{{ ansible_hostname }}.{{ ldap_domain }}"
+  command: kadmin.local -q "ktadd {{ item }}/{{ ansible_hostname }}.{{ ldap_domain }}"
+  with_items:
+    - host
+    - ldap
   when: not krb5kdc.stat.exists
 
+##############
+  
 - name: kerberize dummy user foo
   command: kadmin.local -q 'add_principal -pw {{ foo_pwd }} -x dn="uid=foo,ou=people,{{ basedn }}" foo'
   when: foo_pwd is defined

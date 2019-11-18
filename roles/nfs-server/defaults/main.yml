@@ -1,4 +1,4 @@
 export_root: /srv/nfs4
-export_dir:  /home/lan
+lan_homes:  /home/lan
 ldap_domain: "{{ ansible_domain | default('intern', true) }}"
 basedn: "{{ 'dc=' + ( ldap_domain | replace('^.','') | replace('.$','') | replace('.',',dc=')) }}"

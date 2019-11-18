@@ -1,3 +1,4 @@
 ## access controls for the Kerberos KDC
+root/admin@{{ ldap_domain | upper }} *
 *@{{ ldap_domain | upper }} cil
 */*@{{ ldap_domain | upper }} i
