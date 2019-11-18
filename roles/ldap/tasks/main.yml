@@ -93,6 +93,7 @@
       uidNumber: 10000
       gidNumber: 10000
       homeDirectory: "{{ lan_homes }}/foo"
+      loginShell: /bin/bash
     bind_dn: "cn=admin,{{ basedn }}"
     bind_pw: "{{ ldap_admin_pwd }}"
   when: foo_pwd is defined

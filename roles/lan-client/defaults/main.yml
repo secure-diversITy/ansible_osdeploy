@@ -1,0 +1,6 @@
+lan_homes:  /home/lan
+ldap_domain: "{{ ansible_domain | default('intern', true) }}"
+basedn: "{{ 'dc=' + ( ldap_domain | replace('^.','') | replace('.$','') | replace('.',',dc=')) }}"
+ldap_server: ldap
+krb_server: kerberos
+nfs_server: nfs
