@@ -2,6 +2,7 @@
   apt:
     name:
       - task-kde-desktop
+      - sddm-theme-debian-breeze
       - cups
     state: latest
 

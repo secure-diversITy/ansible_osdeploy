@@ -33,6 +33,8 @@
       - nfs-common
     state: latest
 
+## oddjob-mkhomedir works only with sec=sys for the NFSv4 share
+    
 - name: provide identities from directory
   template:
     src: sssd.conf.j2
@@ -46,17 +48,19 @@
 
 ## Activate machine after installation:
 - name: create machine principal
-  command: kadmin -p root/admin -w {{ lookup('password', '/root/kadmin.pwd') }} -q "addprinc -randkey nfs/{{ ansible_hostname }}.{{ ansible_domain }}"
+  command: kadmin -p root/admin -w {{ kadmin_pwd }} -q "addprinc -randkey nfs/{{ ansible_hostname }}.{{ ansible_domain }}"
+  register: kerberize_result
+  changed_when: kerberize_result.stderr is not search('already exists while creating')
   no_log: true
-  when: not run_in_installer|default(false)|bool
+  when: not run_in_installer|default(false)|bool and kadmin_pwd | length > 0
 
 - name: add principal to keytab
-  command: kadmin -p root/admin -w {{ lookup('password', '/root/kadmin.pwd') }} -q "ktadd nfs/{{ ansible_hostname }}.{{ ansible_domain }}"
+  command: kadmin -p root/admin -w {{ kadmin_pwd }} -q "ktadd nfs/{{ ansible_hostname }}.{{ ansible_domain }}"
   args:
     creates: /etc/krb5.keytab
   no_log: true
   notify: "restart rpc-gssd"
-  when: not run_in_installer|default(false)|bool
+  when: not run_in_installer|default(false)|bool and kadmin_pwd | length > 0
 
 - name: automount
   lineinfile:

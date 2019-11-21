@@ -2,7 +2,7 @@
 ##  run most tasks only on krb5-kdc-ldap installation.
 ---
 - fail: msg="The machine's domain must not be empty."
-  when: ansible_domain | length == 0 
+  when: ansible_domain | length == 0
 
 - name: check if slapd is already there
   stat: path=/usr/sbin/krb5kdc
@@ -142,35 +142,38 @@
   notify: "restart krb5-kdc"
   when: not krb5kdc.stat.exists
 
-- name: add root/admin as kadmin  
-  command: kadmin.local -q "addprinc -pw {{ kadmin_pwd }} root/admin"
+- name: add root/admin as kadmin
+  command: kadmin.local -q 'addprinc -pw "{{ kadmin_pwd }}" root/admin'
   when: not krb5kdc.stat.exists
 
 - name: dump kadmin password
   shell: echo -n "{{ kadmin_pwd }}" > "{{ kadmin_pwd_file }}" ; chmod 0600 "{{ kadmin_pwd_file }}"
   no_log: true
   when: not krb5kdc.stat.exists
-  
+
 - name: add default policy to silence warning when using kadmin
   command: kadmin.local -q "add_policy default"
   when: not krb5kdc.stat.exists
 
 - name: create machine principals
-  command: kadmin.local -q "addprinc -randkey {{ item }}/{{ ansible_hostname }}.{{ ansible_domain }}"
+  command: kadmin.local -q 'addprinc -randkey {{ item }}/{{ ansible_hostname }}.{{ ansible_domain }}'
   with_items:
     - host
     - ldap
   when: not krb5kdc.stat.exists
 
 - name: add principal to the keytab
-  command: kadmin.local -q "ktadd {{ item }}/{{ ansible_hostname }}.{{ ansible_domain }}"
+  command: kadmin.local -q 'ktadd {{ item }}/{{ ansible_hostname }}.{{ ansible_domain }}'
   with_items:
     - host
     - ldap
   when: not krb5kdc.stat.exists
 
 ##############
-  
+
 - name: kerberize dummy user foo
-  command: kadmin.local -q 'add_principal -pw {{ foo_pwd }} -x dn="uid=foo,ou=people,{{ basedn }}" foo'
-  when: foo_pwd is defined
+  command: kadmin.local -q 'add_principal -pw "{{ foo_pwd }}" -x dn="uid=foo,ou=people,{{ basedn }}" foo'
+  register: kerberize_result
+  changed_when: kerberize_result.stderr is not search('already exists while creating')
+  no_log: true
+  when: foo_pwd is defined and foo_pwd | length > 0

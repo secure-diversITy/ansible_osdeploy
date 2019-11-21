@@ -1,7 +1,7 @@
 ## Install and configure nfs-server
 ---
 - fail: msg="The machine's domain must not be empty."
-  when: ansible_domain | length == 0 
+  when: ansible_domain | length == 0
 
 - name: check if there are installing
   stat: path=/etc/exports
@@ -13,19 +13,12 @@
       - nfs-kernel-server
     state: latest
 
-- name: make sure the export exists
+- name: make sure the export paths exists
   file: path={{ export_root }}/home/ state=directory recurse=yes
 
-- name: make sure the export exists
+- name: make sure the lan homes exists
   file: path={{ lan_homes }} state=directory recurse=yes
-
-- name: bind mount exported dir
-  mount:
-    path: "{{ export_root }}/home/"
-    src: "{{ lan_homes }}"
-    fstype: none
-    state: mounted
-    opts: bind
+  notify: "bind mount exported dirs"
 
 - name: configure exports
   blockinfile:
@@ -35,8 +28,6 @@
       {{ export_root }}         *(sec=krb5p,rw,fsid=0,crossmnt,no_subtree_check)
       {{ export_root }}/home/   *(sec=krb5p,rw,no_subtree_check)
   notify: "restart nfs-kernel-server"
-
-
 
 - name: check if there is a local kadmin
   stat: path=/usr/sbin/kadmin.local
@@ -71,4 +62,15 @@
   shell: cp -r /etc/skel {{ lan_homes }}/foo && chmod -R o-rwx {{ lan_homes }}/foo && chown -R foo:foo {{ lan_homes }}/foo
   args:
     creates: "{{ lan_homes }}/foo"
-  when: foo_pwd is defined
+  when: foo_pwd is defined and foo_pwd | length > 0
+
+- name: check if our dnsmasq is used
+  stat: path=/etc/dnsmasq.d/dnsmasq-dhcp
+  register: dnsmasq
+
+- name: send domain to clients
+  template:
+    src: dhcp-send-domain.j2
+    dest: /etc/dnsmasq.d/dhcp-send-domain
+  notify: "restart dnsmasq"
+  when: dnsmasq.stat.exists

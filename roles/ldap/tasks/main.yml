@@ -2,7 +2,7 @@
 ##  run most tasks only on slapd installation.
 ---
 - fail: msg="The machine's domain must not be empty."
-  when: ansible_domain | length == 0 
+  when: ansible_domain | length == 0
 
 - name: check if slapd is already there
   stat: path=/usr/sbin/slapd
@@ -35,7 +35,7 @@
   when: not slapd.stat.exists
 
 - name: dump admin password
-  shell: echo -n "{{ ldap_admin_pwd }}" > "{{ ldap_pwd_file }}" ; chmod 0600 "{{ ldap_pwd_file }}"
+  shell: echo -n "{{ ldap_admin_pwd }}" > "{{ ldap_admin_pwd_file }}" ; chmod 0600 "{{ ldap_admin_pwd_file }}"
   no_log: true
   when: not slapd.stat.exists
 
@@ -80,6 +80,11 @@
     bind_dn: "cn=admin,{{ basedn }}"
     bind_pw: "{{ ldap_admin_pwd }}"
 
+- name: provide simple script to add/delete users
+  template:
+    src: debian-lan.j2
+    dest: /usr/local/sbin/debian-lan
+    mode: 0744
 
 ## Add user
 - name: add dummy user foo
@@ -98,7 +103,7 @@
       loginShell: /bin/bash
     bind_dn: "cn=admin,{{ basedn }}"
     bind_pw: "{{ ldap_admin_pwd }}"
-  when: foo_pwd is defined
+  when: foo_pwd is defined and foo_pwd | length > 0
 
 - name: add dummy group foo
   ldap_entry:
@@ -109,7 +114,7 @@
       gidNumber: 10000
     bind_dn: "cn=admin,{{ basedn }}"
     bind_pw: "{{ ldap_admin_pwd }}"
-  when: foo_pwd is defined
+  when: foo_pwd is defined and foo_pwd | length > 0
 
 ## ldapaddgroup tom
 ## ldapadduser tom tom

@@ -1,0 +1,26 @@
+---
+# This playbook deploys a client for the kerberox LAN.
+
+- name: apply configuration to the machines
+  hosts: all
+  remote_user: ansible
+  become: yes
+  vars:
+    deb_release: "buster"
+    extra_pkgs:
+      - webext-privacy-badger
+      - webext-ublock-origin
+      - krb5-auth-dialog
+    extra_pkgs_bpo: []  # [ libreoffice ]
+
+  vars_prompt:
+    - name: "kadmin_pwd"
+      prompt: "Provide kadmin password to fetch kerberos keytab.\nLeave empty if done already"
+      private: yes
+      
+  roles:
+    - up2date-debian
+    - lan-client
+    ## Choose either gnome or KDE:
+    - gnome
+    #- kde
