@@ -16,7 +16,7 @@ ldap_search_base = {{ basedn }}
 
 auth_provider = krb5
 krb5_server = {{ ansible_hostname }}
-krb5_realm = {{ ldap_domain | upper }}
+krb5_realm = {{ ansible_domain | upper }}
 cache_credentials = false
 
 min_id = 10000

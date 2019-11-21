@@ -1,16 +1,16 @@
 [libdefaults]
-        default_realm = {{ ldap_domain | upper }}
+        default_realm = {{ ansible_domain | upper }}
 
 [realms]
-        {{ ldap_domain | upper }} = {
+        {{ ansible_domain | upper }} = {
                 kdc = {{ ansible_hostname }}
                 admin_server = {{ ansible_hostname }}
                 database_module = LDAP
         }
 
 [domain_realm]
-        .{{ ldap_domain }} = {{ ldap_domain | upper }}
-        {{ ldap_domain }} = {{ ldap_domain | upper }}
+        .{{ ansible_domain }} = {{ ansible_domain | upper }}
+        {{ ansible_domain }} = {{ ansible_domain | upper }}
 
 [dbdefaults]
         ldap_kerberos_container_dn = cn=kerberos,{{ basedn }}

@@ -2,7 +2,7 @@
     kdc_ports = 750,88
 
 [realms]
-    {{ ldap_domain | upper }} = {
+    {{ ansible_domain | upper }} = {
         admin_keytab = FILE:/etc/krb5kdc/kadm5.keytab
         acl_file = /etc/krb5kdc/kadm5.acl
         key_stash_file = /etc/krb5kdc/stash

@@ -1,6 +1,8 @@
 ## Install and configure slapd (if not done yet),
 ##  run most tasks only on slapd installation.
 ---
+- fail: msg="The machine's domain must not be empty."
+  when: ansible_domain | length == 0 
 
 - name: check if slapd is already there
   stat: path=/usr/sbin/slapd
@@ -10,7 +12,7 @@
   debconf:
     name: slapd
     question:  slapd/domain
-    value: "{{ ldap_domain }}"
+    value: "{{ ansible_domain }}"
     vtype: string
   when: not slapd.stat.exists
 

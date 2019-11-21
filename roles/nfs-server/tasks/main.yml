@@ -1,5 +1,8 @@
 ## Install and configure nfs-server
 ---
+- fail: msg="The machine's domain must not be empty."
+  when: ansible_domain | length == 0 
+
 - name: check if there are installing
   stat: path=/etc/exports
   register: exports
@@ -40,11 +43,11 @@
   register: kadmin
 
 - name: create machine principal
-  command: kadmin.local -q "addprinc -randkey nfs/{{ ansible_hostname }}.{{ ldap_domain }}"
+  command: kadmin.local -q "addprinc -randkey nfs/{{ ansible_hostname }}.{{ ansible_domain }}"
   when: kadmin.stat.exists and not exports.stat.exists
 
 - name: add principal to the keytab
-  command: kadmin.local -q "ktadd nfs/{{ ansible_hostname }}.{{ ldap_domain }}"
+  command: kadmin.local -q "ktadd nfs/{{ ansible_hostname }}.{{ ansible_domain }}"
   notify: "restart rpc-svcgssd"
   when: kadmin.stat.exists and not exports.stat.exists
 

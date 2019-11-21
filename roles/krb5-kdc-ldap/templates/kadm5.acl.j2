@@ -1,4 +1,4 @@
 ## access controls for the Kerberos KDC
-root/admin@{{ ldap_domain | upper }} *
-*@{{ ldap_domain | upper }} cil
-*/*@{{ ldap_domain | upper }} i
+root/admin@{{ ansible_domain | upper }} *
+*@{{ ansible_domain | upper }} cil
+*/*@{{ ansible_domain | upper }} i

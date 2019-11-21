@@ -1,9 +1,12 @@
 ---
+- fail: msg="The machine's domain must not be empty."
+  when: ansible_domain | length == 0 
+
 - name: preseed krb5-config realm
   debconf:
     name: krb5-config
     question: krb5-config/default_realm
-    value: "{{ ldap_domain | upper }}"
+    value: "{{ ansible_domain | upper }}"
     vtype: string
 
 - name: preseed krb5-config kerberos servers
@@ -43,12 +46,12 @@
 
 ## Activate machine after installation:
 - name: create machine principal
-  command: kadmin -p root/admin -w {{ lookup('password', '/root/kadmin.pwd') }} -q "addprinc -randkey nfs/{{ ansible_hostname }}.{{ ldap_domain }}"
+  command: kadmin -p root/admin -w {{ lookup('password', '/root/kadmin.pwd') }} -q "addprinc -randkey nfs/{{ ansible_hostname }}.{{ ansible_domain }}"
   no_log: true
   when: not run_in_installer|default(false)|bool
 
 - name: add principal to keytab
-  command: kadmin -p root/admin -w {{ lookup('password', '/root/kadmin.pwd') }} -q "ktadd nfs/{{ ansible_hostname }}.{{ ldap_domain }}"
+  command: kadmin -p root/admin -w {{ lookup('password', '/root/kadmin.pwd') }} -q "ktadd nfs/{{ ansible_hostname }}.{{ ansible_domain }}"
   args:
     creates: /etc/krb5.keytab
   no_log: true
