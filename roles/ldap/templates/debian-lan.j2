@@ -1,0 +1,140 @@
+#!/bin/bash
+#
+# A simple script to add users and their group to ldap, as well as a kerberos principal.
+#
+
+set -eu
+
+usage(){
+    cat <<EOF
+Usage: 
+         $(basename $0)  adduser  <uid>  <password>  [<cn>] [<sn>]
+         $(basename $0)  deluser  <uid>
+
+     <uid>:        User ID (login name)
+     <password>:   Password 
+     <cn>, <sn>:   LDAP attributes, if omitted, <uid> is used.
+
+EOF
+}
+
+#sss_cache -U -G  ## should not be necessary
+
+if [ $# -lt 2 ] ; then
+    usage
+    exit 1
+elif [ $1 = adduser -a $# -lt 3 ] ; then
+    echo "Error: Password missing."
+    usage
+    exit 1
+fi
+
+MINID=10000
+MAXID=20000
+BASEDN="{{ basedn }}"
+HOMES="{{ lan_homes }}"
+LDAPADMIN="cn=admin,$BASEDN"
+ADPASSWD="$(cat {{ ldap_admin_pwd_file }})"
+
+COMMAND="$1"
+uid="$2"
+pw="${3:-""}"
+cn="${4:-$2}"
+sn="${5:-$2}"
+
+if [ -x /usr/sbin/kadmin.local ] ; then
+    KRB5=true
+    pwEntry=""
+else
+    KRB5=false
+    pwEntry="userPassword: $pw"
+fi
+
+#############
+
+
+nextnum(){
+    local num
+    num="$(( $(ldapsearch -Y EXTERNAL -H ldapi:/// -LLL -b "ou=people,$BASEDN" -S $1 $1 2>/dev/null \
+                        |  tail -n -2 | grep -oE "[[:digit:]]+$") + 1 ))"
+    if [ $num -lt $MINID ] ; then
+        echo $MINID
+    else
+        echo "$num"
+    fi
+}
+
+add-user(){
+    uidNumber=$(nextnum uidNumber)
+    gidNumber=$(nextnum gidNumber)
+    
+    if [ $uidNumber -ge $MAXID -o $gidNumber -ge $MAXID ] ; then
+        echo "Error: $uidNumber and/or $gidNumber exceed max ID number ${MAXID}."
+        exit 1
+    fi
+    
+    cat <<EOF | ldapadd -H ldapi:/// -D "$LDAPADMIN"  -w "$ADPASSWD" | sed '/^$/d'
+############## LDIF ##############
+dn: uid=${uid},ou=people,$BASEDN
+objectClass: inetOrgPerson
+objectClass: posixAccount
+uidNumber: ${uidNumber}
+gidNumber: ${gidNumber}
+homeDirectory: ${HOMES}/${uid}
+loginShell: /bin/bash
+cn: ${cn}
+sn: ${sn}
+${pwEntry}
+
+dn: cn=${uid},ou=groups,$BASEDN
+objectClass: posixGroup
+gidNumber: ${gidNumber}
+##################################
+EOF
+
+    echo "uidNumber: ${uidNumber}  gidNumber: ${gidNumber}"
+
+    if [ $KRB5 ] ; then
+        kadmin.local -q "add_principal -policy default -pw \"$pw\" -x dn=\"uid=${uid},ou=people,$BASEDN\" ${uid}" \
+            | sed '/Authenticating as principal/d'
+        cp -r /etc/skel ${HOMES}/${uid}
+        chown -R ${uidNumber}:${gidNumber} ${HOMES}/${uid}
+        ls -nld ${HOMES}/${uid}
+    fi
+}
+
+
+del-user(){
+    local KEEPDIR
+    if [ $KRB5 ] ; then
+        ## Remove all kerberos attributes from LDAP, then the whole DN below.  The latter should be sufficient. 
+        kadmin.local -q "delete_principal -force ${uid}"  \
+            |  sed -e '/Authenticating as principal/d' -e '/Make sure that you have removed/d'
+    fi
+    
+    ldapdelete -v -H ldapi:/// -D "$LDAPADMIN"  -w "$ADPASSWD" "uid=${uid},ou=people,$BASEDN"  "cn=${uid},ou=groups,$BASEDN" 2>&1 \
+        | sed '/ldap_initialize/d' 
+    
+    if [ -d ${HOMES}/${uid} ] ; then
+        KEEPDIR="${HOMES}/rm_$(date '+%Y%m%d')_${uid}"
+        mv ${HOMES}/${uid} "${KEEPDIR}"
+        chown -R root:root  "${KEEPDIR}"
+        ls -ld "$KEEPDIR"
+    fi
+}
+    
+##############################
+########### main #############
+##############################
+
+case $COMMAND in
+    adduser)
+        add-user
+        ;;
+    deluser)
+        del-user
+        ;;
+    *)
+        usage
+        ;;
+esac

@@ -47,6 +47,7 @@
     name:
       - sssd-krb5
       - sssd-ldap
+      - sssd-tools     ##  sss_cache -U -G
     state: latest
   when: kadmin.stat.exists
 
