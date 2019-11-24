@@ -75,3 +75,19 @@
     dest: /etc/dnsmasq.d/dhcp-send-domain
   notify: "restart dnsmasq"
   when: dnsmasq.stat.exists
+
+#############################
+
+- name: allow nfs service in firewalld
+  firewalld:
+    zone: internal
+    service: nfs
+    permanent: yes
+    state: enabled
+  when: not run_in_installer|default(false)|bool
+
+## Use firewall-offline-cmd when run during installation:
+
+- name: allow nfs service in firewalld
+  command: "firewall-offline-cmd --zone=internal --add-service=nfs"
+  when: run_in_installer|default(false)|bool

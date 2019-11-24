@@ -116,5 +116,18 @@
     bind_pw: "{{ ldap_admin_pwd }}"
   when: foo_pwd is defined and foo_pwd | length > 0
 
-## ldapaddgroup tom
-## ldapadduser tom tom
+#############################
+
+- name: allow ldap service in firewalld
+  firewalld:
+    zone: internal
+    service: ldap
+    permanent: yes
+    state: enabled
+  when: not run_in_installer|default(false)|bool
+
+## Use firewall-offline-cmd when run during installation:
+
+- name: allow ldap service in firewalld 
+  command: "firewall-offline-cmd --zone=internal --add-service=ldap"
+  when: run_in_installer|default(false)|bool

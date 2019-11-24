@@ -177,3 +177,27 @@
   changed_when: kerberize_result.stderr is not search('already exists while creating')
   no_log: true
   when: foo_pwd is defined and foo_pwd | length > 0
+
+#############################
+
+- name: allow services in firewalld
+  firewalld:
+    zone: internal
+    service: "{{ item }}"
+    permanent: yes
+    state: enabled
+  with_items:
+    - kerberos
+    - kadmin
+    - kpasswd
+  when: not run_in_installer|default(false)|bool
+
+## Use firewall-offline-cmd when run during installation:
+
+- name: allow services in firewalld
+  command: >-
+    firewall-offline-cmd --zone=internal
+    --add-service=kerberos
+    --add-service=kadmin
+    --add-service=kpasswd
+  when: run_in_installer|default(false)|bool

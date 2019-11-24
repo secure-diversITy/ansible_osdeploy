@@ -65,5 +65,10 @@
   when: run_in_installer|default(false)|bool
 
 - name: enable services
-  command: "firewall-offline-cmd --zone=internal --add-service=dhcp --add-service=dns --add-service=tftp --add-service=git"
+  command: >-
+    firewall-offline-cmd --zone=internal
+    --add-service=dhcp
+    --add-service=dns
+    --add-service=tftp
+    --add-service=git
   when: run_in_installer|default(false)|bool
