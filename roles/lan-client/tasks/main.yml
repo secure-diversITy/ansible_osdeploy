@@ -1,6 +1,6 @@
 ---
 - fail: msg="The machine's domain must not be empty."
-  when: ansible_domain | length == 0 
+  when: ansible_domain | length == 0
 
 - name: preseed krb5-config realm
   debconf:
@@ -34,7 +34,21 @@
     state: latest
 
 ## oddjob-mkhomedir works only with sec=sys for the NFSv4 share
-    
+
+- name: install extra packages from stable
+  apt: name={{ extra_pkgs }} state=latest
+
+- name: add {{ ansible_distribution_release }}-backports
+  apt_repository:
+    repo: deb http://deb.debian.org/debian/ {{ ansible_distribution_release }}-backports main
+    state: present
+    update_cache: yes
+  when: extra_pkgs_bpo|length
+
+- name: install extra packages from backports
+  apt: name={{ extra_pkgs_bpo }} state=latest default_release={{ ansible_distribution_release }}-backports
+  when: extra_pkgs_bpo|length
+
 - name: provide identities from directory
   template:
     src: sssd.conf.j2

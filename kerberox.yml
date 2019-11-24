@@ -17,8 +17,8 @@
     dhcp_list: "{{ lookup('sequence', 'start=50 end=150 format=192.168.0.%d', wantlist=True) }}"
     tftp_root: "/var/lib/tftpboot"
     deb_mirror: "deb.debian.org"
-    di_dist: "buster"
-    di_version: "10"
+    di_dist: "{{ ansible_distribution_release }}"
+    di_version: "{{ ansible_distribution_version }}"
     di_pkg: "debian-installer-{{ di_version }}-netboot-amd64"
     ansible_user: ansible
     repo_dir: "/home/{{ ansible_user }}/debian-lan"

@@ -6,7 +6,6 @@
   remote_user: ansible
   become: yes
   vars:
-    deb_release: "buster"
     extra_pkgs:
       - webext-privacy-badger
       - webext-ublock-origin

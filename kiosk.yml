@@ -6,7 +6,6 @@
   remote_user: ansible
   become: yes
   vars:
-    deb_release: "buster"
     auto_user: debi
     wifi_ssid: "YOUR SSID HERE"
     wifi_passwd: "YOUR WIFI-PW HERE"
