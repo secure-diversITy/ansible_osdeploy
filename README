@@ -41,9 +41,8 @@ Installbox
    - LAN interface not configured/managed
 
  • Customize installbox.yml:
-   - set if_lan (mandatory)
-   - modify deb_mirror
-   - enable installbox2kiosk task
+   - set if_lan if necessary
+   - enable/disable installbox2kiosk task
 
  • Run ansible:
      ssh-copy-id ansible@1.2.3.4

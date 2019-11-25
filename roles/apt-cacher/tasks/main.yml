@@ -9,5 +9,18 @@
     dest: /etc/apt/apt.conf
     backup: yes
   notify: "start apt-cacher-ng"
+  when: not run_in_installer|default(false)|bool  ## do not enable apt-cacher during installation
+
+
+- name: check if preseeded installer is available
+  stat: path={{ tftp_root }}/d-i/{{ di_dist }}/preseed.cfg
+  register: preseedcfg
+
+- name: enable apt-cacher-ng for install-clients
+  replace:
+    dest: "{{ tftp_root }}/d-i/{{ di_dist }}/preseed.cfg"
+    regexp: '^(d-i mirror/http/proxy string.*)$'
+    replace: 'd-i mirror/http/proxy string http://{{ ansible_hostname }}:3142/'
+  when: preseedcfg.stat.exists
 
 - meta: flush_handlers

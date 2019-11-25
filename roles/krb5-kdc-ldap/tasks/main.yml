@@ -4,7 +4,7 @@
 - fail: msg="The machine's domain must not be empty."
   when: ansible_domain | length == 0
 
-- name: check if slapd is already there
+- name: check if krb5kdc is already there
   stat: path=/usr/sbin/krb5kdc
   register: krb5kdc
 

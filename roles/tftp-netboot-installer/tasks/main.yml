@@ -1,3 +1,8 @@
+- name: make preseed directory available
+  file:
+    path: "{{ tftp_root }}/d-i/{{ di_dist }}"
+    state: directory
+
 - name: install di-netboot-assistant and installer package
   apt:
     name:
@@ -7,6 +12,12 @@
     - bind mount images
     - rebuild di-netboot-assistant menu
 
+- name: provide preseed file
+  copy:
+    src: /usr/share/doc/di-netboot-assistant/examples/preseed.cfg
+    dest: "{{ tftp_root }}/d-i/{{ di_dist }}"
+    force: no
+
 - name: configure dnsmasq
   template:
     src: dnsmasq-tftp-netboot-installer.j2
@@ -14,3 +25,9 @@
   notify:
     - restart dnsmasq
     - rebuild di-netboot-assistant menu
+
+- name: make the hostname resolvable from the LAN
+  replace:
+    path: /etc/hosts
+    regexp: '^(127\.0\.1\.1.*)$'
+    replace: '#\1\n{{ ipaddr_lan }}	{{ ansible_hostname }}.{{ ansible_domain }}	{{ ansible_hostname }}'

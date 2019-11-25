@@ -1,28 +1,33 @@
 ---
-# This playbook deploys the installbox on a minimal installation.
+## This playbook deploys the installbox.  Add 'hostname=XXX' and
+## 'domain=YYY' to the installer boot parameters to set hostname and
+## domain.
 
 - name: apply configuration to the installbox
   hosts: all
   remote_user: ansible
   become: yes
+
   vars:
     ## This interface provides the default route:
     if_wan: "{{ ansible_default_ipv4.interface }}"
+
     ## Use the first remaining interface for the LAN:
     if_lan: "{{ ansible_interfaces | difference([if_wan, 'lo']) | first }}"
-    ## Add 'hostname=XXX' to the installer boot parameters if necessary:
-    hostname: "{{ ansible_hostname }}"
+
+    ## LAN IP address range:
     ipaddr_lan: 192.168.0.10
     dhcp_range: 192.168.0.50,192.168.0.150,2h
     dhcp_list: "{{ lookup('sequence', 'start=50 end=150 format=192.168.0.%d', wantlist=True) }}"
-    tftp_root: "/var/lib/tftpboot"
-    deb_mirror: "deb.debian.org"
-    di_dist: "buster"
-    di_version: "10"
+
+    di_dist: "{{ ansible_distribution_release }}"
+    di_version: "{{ ansible_distribution_major_version }}"
     di_pkg: "debian-installer-{{ di_version }}-netboot-amd64"
+
     ansible_user: ansible
-    repo_dir: "/home/{{ ansible_user }}/kiosk"
-    ansible_python_interpreter: "/usr/bin/python3"  # needed for firewalld module
+    repo_dir: "/home/{{ ansible_user }}/debian-lan"
+    ansible_python_interpreter: "/usr/bin/python3"  ## needed for firewalld module
+
 
   pre_tasks:
     - name: validate if interfaces are available
@@ -30,11 +35,11 @@
         msg: "Interfaces {{ ansible_interfaces }} found. WAN: '{{ if_wan }}', LAN: '{{ if_lan }}'.  Two NICs needed."
       when: (if_lan not in ansible_interfaces) or (if_wan not in ansible_interfaces) or (if_lan == if_wan)
 
+
   roles:
     - up2date-debian
     - two-interface-firewalld
     - dhcp-dns-dnsmasq
     - tftp-netboot-installer
-    - preseed-installer
     - apt-cacher
-    - installbox2kiosk
+    - prepare4clients

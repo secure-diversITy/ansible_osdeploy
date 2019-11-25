@@ -16,7 +16,7 @@
     - name: "kadmin_pwd"
       prompt: "Provide kadmin password to fetch kerberos keytab.\nLeave empty if done already"
       private: yes
-      
+
   roles:
     - up2date-debian
     - lan-client

@@ -24,7 +24,7 @@
 - name: enable masquerading
   firewalld:
     zone: public
-    masquerade: yes
+    masquerade: 'yes'
     permanent: yes
     state: enabled
   when: not run_in_installer|default(false)|bool
