@@ -36,7 +36,8 @@
 
 - name: prepare kerberos.openldap.ldif
   shell: gunzip -c /usr/share/doc/krb5-kdc-ldap/kerberos.openldap.ldif.gz > /etc/ldap/schema/kerberos.openldap.ldif
-  when: not krb5kdc.stat.exists
+  args:
+    creates: /etc/ldap/schema/kerberos.openldap.ldif
 
 - name: activate kerberos.openldap.ldif schema
   command: ldapadd  -Y EXTERNAL -H ldapi:/// -f /etc/ldap/schema/kerberos.openldap.ldif
@@ -48,7 +49,6 @@
     objectClass: krbContainer
     bind_dn: "cn=admin,{{ basedn }}"
     bind_pw: "{{ ldap_admin_pwd }}"
-  when: not krb5kdc.stat.exists
 
 - name: make sure we have a kdc object
   ldap_entry:
@@ -60,7 +60,6 @@
       userPassword: "{{ kdc_service_pwd }}"
     bind_dn: "cn=admin,{{ basedn }}"
     bind_pw: "{{ ldap_admin_pwd }}"
-  when: not krb5kdc.stat.exists
 
 - name: make sure we have a kadmin object
   ldap_entry:
@@ -72,7 +71,6 @@
       userPassword: "{{ kadmin_service_pwd }}"
     bind_dn: "cn=admin,{{ basedn }}"
     bind_pw: "{{ ldap_admin_pwd }}"
-  when: not krb5kdc.stat.exists
 
 - name: modify ACLs to account for KDC
   ldap_attr:
@@ -110,7 +108,13 @@
   ldap_attr:
     dn: "olcDatabase={1}mdb,cn=config"
     name: olcDbIndex
-    values: krbPrincipalName pres,sub,eq
+    values:
+      - objectClass eq
+      - cn,uid eq
+      - uidNumber,gidNumber eq
+      - member,memberUid eq
+      - krbPrincipalName pres,sub,eq
+    state: exact
   when: not krb5kdc.stat.exists
 
 - name: prepare password for kdc
@@ -169,16 +173,12 @@
     - ldap
   when: not krb5kdc.stat.exists
 
-##############
-
 - name: kerberize dummy user foo
   command: kadmin.local -q 'add_principal -pw "{{ foo_pwd }}" -x dn="uid=foo,ou=people,{{ basedn }}" foo'
   register: kerberize_result
   changed_when: kerberize_result.stderr is not search('already exists while creating')
   no_log: true
   when: foo_pwd is defined and foo_pwd | length > 0
-
-#############################
 
 - name: allow services in firewalld
   firewalld:
@@ -190,14 +190,3 @@
     - kerberos
     - kadmin
     - kpasswd
-  when: not run_in_installer|default(false)|bool
-
-## Use firewall-offline-cmd when run during installation:
-
-- name: allow services in firewalld
-  command: >-
-    firewall-offline-cmd --zone=internal
-    --add-service=kerberos
-    --add-service=kadmin
-    --add-service=kpasswd
-  when: run_in_installer|default(false)|bool
