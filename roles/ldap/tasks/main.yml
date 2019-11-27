@@ -62,6 +62,13 @@
   command: ldapadd  -Y EXTERNAL -H ldapi:/// -f /etc/ldap/slapd.d/slapd-config.ldif
   when: not slapd.stat.exists
 
+- name: "make 'ldap' an alias hostname resolvable from the LAN"
+  replace:
+    path: /etc/hosts
+    regexp: "^({{ ipaddr_lan }}\\s.+)$"
+    replace: '\1	ldap'
+  when: not slapd.stat.exists
+
 #######################################################################################
 ## Use the admin password saved to file from now on (available also after installation):
 - name: slurp admin password

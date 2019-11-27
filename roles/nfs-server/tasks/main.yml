@@ -3,7 +3,7 @@
 - fail: msg="The machine's domain must not be empty."
   when: ansible_domain | length == 0
 
-- name: check if there are installing
+- name: check if we are installing
   stat: path=/etc/exports
   register: exports
 
@@ -28,6 +28,13 @@
       {{ export_root }}         *(sec=krb5p,rw,fsid=0,crossmnt,no_subtree_check)
       {{ export_root }}/home/   *(sec=krb5p,rw,no_subtree_check)
   notify: "restart nfs-kernel-server"
+
+- name: "make 'nfs' an alias hostname resolvable from the LAN"
+  replace:
+    path: /etc/hosts
+    regexp: "^({{ ipaddr_lan }}\\s.+)$"
+    replace: '\1	nfs'
+  when: not exports.stat.exists
 
 - name: check if there is a local kadmin
   stat: path=/usr/sbin/kadmin.local

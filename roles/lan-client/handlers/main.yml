@@ -10,5 +10,6 @@
 - name: restart rpc-gssd
   systemd:
     name: rpc-gssd
+    daemon_reload: yes
     state: restarted
   notify: "restart rpc-gssd"
