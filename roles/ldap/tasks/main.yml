@@ -62,8 +62,13 @@
   command: ldapadd  -Y EXTERNAL -H ldapi:/// -f /etc/ldap/slapd.d/slapd-config.ldif
   when: not slapd.stat.exists
 
-
 #######################################################################################
+## Use the admin password saved to file from now on (available also after installation):
+- name: slurp admin password
+  slurp:
+    src: "{{ ldap_admin_pwd_file }}"
+  register: ldap_admin_pwd
+  no_log: true
 
 ## Prepare user directories
 - name: make sure we have a people entry for users
@@ -71,19 +76,19 @@
     dn: "ou=people,{{ basedn }}"
     objectClass: organizationalUnit
     bind_dn: "cn=admin,{{ basedn }}"
-    bind_pw: "{{ ldap_admin_pwd }}"
+    bind_pw: "{{ ldap_admin_pwd['content'] | b64decode | replace('\n', '') }}"
 
 - name: make sure we have a group entry for users
   ldap_entry:
     dn: "ou=groups,{{ basedn }}"
     objectClass: organizationalUnit
     bind_dn: "cn=admin,{{ basedn }}"
-    bind_pw: "{{ ldap_admin_pwd }}"
+    bind_pw: "{{ ldap_admin_pwd['content'] | b64decode | replace('\n', '') }}"
 
 - name: provide simple script to add/delete users
   template:
     src: debian-lan.j2
-    dest: /usr/local/sbin/debian-lan
+    dest: /usr/local/bin/debian-lan
     mode: 0744
 
 ## Add user
@@ -102,7 +107,7 @@
       homeDirectory: "{{ lan_homes }}/foo"
       loginShell: /bin/bash
     bind_dn: "cn=admin,{{ basedn }}"
-    bind_pw: "{{ ldap_admin_pwd }}"
+    bind_pw: "{{ ldap_admin_pwd['content'] | b64decode | replace('\n', '') }}"
   when: foo_pwd is defined and foo_pwd | length > 0
 
 - name: add dummy group foo
@@ -113,7 +118,7 @@
     attributes:
       gidNumber: 10000
     bind_dn: "cn=admin,{{ basedn }}"
-    bind_pw: "{{ ldap_admin_pwd }}"
+    bind_pw: "{{ ldap_admin_pwd['content'] | b64decode | replace('\n', '') }}"
   when: foo_pwd is defined and foo_pwd | length > 0
 
 - name: allow ldap service in firewalld

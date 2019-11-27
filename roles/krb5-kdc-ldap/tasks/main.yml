@@ -48,7 +48,7 @@
     dn: "cn=kerberos,{{ basedn }}"
     objectClass: krbContainer
     bind_dn: "cn=admin,{{ basedn }}"
-    bind_pw: "{{ ldap_admin_pwd }}"
+    bind_pw: "{{ ldap_admin_pwd['content'] | b64decode | replace('\n', '') }}"
 
 - name: make sure we have a kdc object
   ldap_entry:
@@ -59,7 +59,7 @@
     attributes:
       userPassword: "{{ kdc_service_pwd }}"
     bind_dn: "cn=admin,{{ basedn }}"
-    bind_pw: "{{ ldap_admin_pwd }}"
+    bind_pw: "{{ ldap_admin_pwd['content'] | b64decode | replace('\n', '') }}"
 
 - name: make sure we have a kadmin object
   ldap_entry:
@@ -70,7 +70,7 @@
     attributes:
       userPassword: "{{ kadmin_service_pwd }}"
     bind_dn: "cn=admin,{{ basedn }}"
-    bind_pw: "{{ ldap_admin_pwd }}"
+    bind_pw: "{{ ldap_admin_pwd['content'] | b64decode | replace('\n', '') }}"
 
 - name: modify ACLs to account for KDC
   ldap_attr:
@@ -137,7 +137,7 @@
     >-
       kdb5_ldap_util
       -D cn=admin,"{{ basedn }}"
-      -w "{{ ldap_admin_pwd }}"
+      -w "{{ ldap_admin_pwd['content'] | b64decode | replace('\n', '') }}"
       -H ldapi:///
       create -s -subtrees "{{ basedn }}"
       -P "{{ kdc_master_pwd }}"

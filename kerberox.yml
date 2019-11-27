@@ -30,7 +30,10 @@
 
   vars_prompt:
     - name: "foo_pwd"
-      prompt: "Provide a non-empty password for the test user 'foo'.\nLeave empty to continue without test user"
+      prompt:
+        In case you would like to prepare a test user 'foo' and have
+        not done so yet, provide foo's password here.  Leave empty to
+        just continue
       private: yes
 
 
