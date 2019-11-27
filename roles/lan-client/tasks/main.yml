@@ -56,9 +56,6 @@
     mode: 0600
   notify: restart sssd
 
-- name: make sure the home mount directory exists
-  file: path={{ lan_homes }} state=directory recurse=yes
-
 
 ## Activate machine after installation:
 - name: create machine principal
@@ -75,6 +72,10 @@
   no_log: true
   notify: "restart rpc-gssd"
   when: not run_in_installer|default(false)|bool and kadmin_pwd | length > 0
+
+
+- name: make sure the home mount directory exists
+  file: path={{ lan_homes }} state=directory recurse=yes
 
 - name: automount
   lineinfile:
