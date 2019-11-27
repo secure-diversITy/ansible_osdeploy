@@ -23,4 +23,11 @@
     replace: 'd-i mirror/http/proxy string http://{{ ansible_hostname }}:3142/'
   when: preseedcfg.stat.exists
 
+- name: allow apt-cacher-ng service in firewalld
+  firewalld:
+    zone: internal
+    port: 3142/tcp
+    permanent: yes
+    state: enabled
+
 - meta: flush_handlers
