@@ -117,6 +117,15 @@
     state: exact
   when: not krb5kdc.stat.exists
 
+- name: add AuthzRegexp to map access via kerberos/GSSAPI
+  ldap_attr:
+    dn: "cn=config"
+    name: olcAuthzRegexp
+    values:
+      - "{0}uid=([^,]*),cn=gssapi,cn=auth     uid=$1,ou=people,{{ basedn }}"
+      - "{1}uid=([^,]*),cn=gs2-iakerb,cn=auth uid=$1,ou=people,{{ basedn }}"
+    state: exact
+
 - name: prepare password for kdc
   shell: echo "cn=kdc,cn=kerberos,{{ basedn }}#{HEX}$(echo -n {{ kdc_service_pwd }} | xxd -g0 -ps | sed 's/0a$//')" > /etc/krb5kdc/service.keyfile
   no_log: true
@@ -172,6 +181,13 @@
     - host
     - ldap
   when: not krb5kdc.stat.exists
+
+- name: allow slapd to read the keytab
+  file:
+    path: /etc/krb5.keytab
+    owner: root
+    group: openldap
+    mode: '0640'
 
 - name: "make 'kerberos' an alias hostname resolvable from the LAN"
   replace:
