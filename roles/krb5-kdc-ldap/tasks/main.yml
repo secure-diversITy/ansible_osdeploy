@@ -176,7 +176,7 @@
 - name: "make 'kerberos' an alias hostname resolvable from the LAN"
   replace:
     path: /etc/hosts
-    regexp: "^({{ ipaddr_lan }}\\s.+)$"
+    regexp: "^({{ ipaddr_lan | ipaddr('address') }}\\s.+)$"
     replace: '\1	kerberos'
   when: not krb5kdc.stat.exists
 

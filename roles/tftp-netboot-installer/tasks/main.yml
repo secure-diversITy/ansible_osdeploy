@@ -30,4 +30,4 @@
   replace:
     path: /etc/hosts
     regexp: '^(127\.0\.1\.1.*)$'
-    replace: '#\1\n{{ ipaddr_lan }}	{{ ansible_hostname }}.{{ ansible_domain }}	{{ ansible_hostname }}'
+    replace: '#\1\n{{ ipaddr_lan | ipaddr("address") }}	{{ ansible_hostname }}.{{ ansible_domain }}	{{ ansible_hostname }}'
