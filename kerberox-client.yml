@@ -20,6 +20,7 @@
   roles:
     - up2date-debian
     - lan-client
+    - kerberize
     ## Choose either gnome or KDE:
     #- gnome
     #- kde

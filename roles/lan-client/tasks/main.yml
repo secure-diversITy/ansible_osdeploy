@@ -56,19 +56,29 @@
     mode: 0600
   notify: restart sssd
 
-
 ## Activate machine after installation:
-- name: create machine principal
-  command: kadmin -p root/admin -w {{ kadmin_pwd }} -q "addprinc -randkey nfs/{{ ansible_hostname }}.{{ ansible_domain }}"
+- name: create machine principals
+  command: kadmin -p root/admin -w {{ kadmin_pwd }} -q "addprinc -randkey {{ item }}/{{ ansible_hostname }}.{{ ansible_domain }}"
   register: kerberize_result
+  with_items:
+    - nfs
+    - host
   changed_when: kerberize_result.stderr is not search('already exists while creating')
   no_log: true
   when: not run_in_installer|default(false)|bool and kadmin_pwd | length > 0
 
-- name: add principal to keytab
-  command: kadmin -p root/admin -w {{ kadmin_pwd }} -q "ktadd nfs/{{ ansible_hostname }}.{{ ansible_domain }}"
+- name: remove old keytab
+  file:
+    path: /etc/krb5.keytab
+    state: absent
+  when: not run_in_installer|default(false)|bool and kadmin_pwd | length > 0
+
+- name: add principals to keytab
+  command: kadmin -p root/admin -w {{ kadmin_pwd }} -q "ktadd {{ item }}/{{ ansible_hostname }}.{{ ansible_domain }}"
+  with_items:
+    - nfs
+    - host
   args:
-    creates: /etc/krb5.keytab
   no_log: true
   notify: "restart rpc-gssd"
   when: not run_in_installer|default(false)|bool and kadmin_pwd | length > 0

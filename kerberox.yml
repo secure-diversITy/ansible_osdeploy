@@ -52,3 +52,4 @@
     - { role: krb5-kdc-ldap, when: not run_in_installer|default(false)|bool }
     - { role: nfs-server, when: not run_in_installer|default(false)|bool }
     - prepare4clients
+    - kerberize
