@@ -7,12 +7,14 @@ set -eu
 
 usage(){
     cat <<EOF
-Usage: 
+Usage:
          $(basename $0)  adduser  <uid>  <password>  [<cn>] [<sn>]
          $(basename $0)  deluser  <uid>
+         $(basename $0)  delhost  <hostname>
+         $(basename $0)  ldapvi
 
      <uid>:        User ID (login name)
-     <password>:   Password 
+     <password>:   Password
      <cn>, <sn>:   LDAP attributes, if omitted, <uid> is used.
 
 EOF
@@ -20,9 +22,17 @@ EOF
 
 #sss_cache -U -G  ## should not be necessary
 
+BASEDN="{{ basedn }}"
+LDAPADMIN="cn=admin,$BASEDN"
+ADPASSWD="$(cat {{ ldap_admin_pwd_file }})"
+
 if [ $# -lt 2 ] ; then
-    usage
-    exit 1
+    if [ "$1" = ldapvi ] ; then
+        exec ldapvi -h ldapi:/// -D "$LDAPADMIN"  -b "$BASEDN" -w "$ADPASSWD"
+    else
+        usage
+        exit 1
+    fi
 elif [ $1 = adduser -a $# -lt 3 ] ; then
     echo "Error: Password missing."
     usage
@@ -31,16 +41,14 @@ fi
 
 MINID=10000
 MAXID=20000
-BASEDN="{{ basedn }}"
 HOMES="{{ lan_homes }}"
-LDAPADMIN="cn=admin,$BASEDN"
-ADPASSWD="$(cat {{ ldap_admin_pwd_file }})"
 
 COMMAND="$1"
-uid="$2"
+id="$2"
 pw="${3:-""}"
 cn="${4:-$2}"
 sn="${5:-$2}"
+domain="$(hostname -d)"
 
 if [ -x /usr/sbin/kadmin.local ] ; then
     KRB5=true
@@ -67,26 +75,26 @@ nextnum(){
 add-user(){
     uidNumber=$(nextnum uidNumber)
     gidNumber=$(nextnum gidNumber)
-    
+
     if [ $uidNumber -ge $MAXID -o $gidNumber -ge $MAXID ] ; then
         echo "Error: $uidNumber and/or $gidNumber exceed max ID number ${MAXID}."
         exit 1
     fi
-    
+
     cat <<EOF | ldapadd -H ldapi:/// -D "$LDAPADMIN"  -w "$ADPASSWD" | sed '/^$/d'
 ############## LDIF ##############
-dn: uid=${uid},ou=people,$BASEDN
+dn: uid=${id},ou=people,$BASEDN
 objectClass: inetOrgPerson
 objectClass: posixAccount
 uidNumber: ${uidNumber}
 gidNumber: ${gidNumber}
-homeDirectory: ${HOMES}/${uid}
+homeDirectory: ${HOMES}/${id}
 loginShell: /bin/bash
 cn: ${cn}
 sn: ${sn}
 ${pwEntry}
 
-dn: cn=${uid},ou=groups,$BASEDN
+dn: cn=${id},ou=groups,$BASEDN
 objectClass: posixGroup
 gidNumber: ${gidNumber}
 ##################################
@@ -95,11 +103,11 @@ EOF
     echo "uidNumber: ${uidNumber}  gidNumber: ${gidNumber}"
 
     if [ $KRB5 ] ; then
-        kadmin.local -q "add_principal -policy default -pw \"$pw\" -x dn=\"uid=${uid},ou=people,$BASEDN\" ${uid}" \
+        kadmin.local -q "add_principal -policy default -pw \"$pw\" -x dn=\"uid=${id},ou=people,$BASEDN\" ${id}" \
             | sed '/Authenticating as principal/d'
-        cp -r /etc/skel ${HOMES}/${uid}
-        chown -R ${uidNumber}:${gidNumber} ${HOMES}/${uid}
-        ls -nld ${HOMES}/${uid}
+        cp -r /etc/skel ${HOMES}/${id}
+        chown -R ${uidNumber}:${gidNumber} ${HOMES}/${id}
+        ls -nld ${HOMES}/${id}
     fi
 }
 
@@ -107,22 +115,33 @@ EOF
 del-user(){
     local KEEPDIR
     if [ $KRB5 ] ; then
-        ## Remove all kerberos attributes from LDAP, then the whole DN below.  The latter should be sufficient. 
-        kadmin.local -q "delete_principal -force ${uid}"  \
+        ## Remove all kerberos attributes from LDAP, then the whole DN below.  The latter should be sufficient.
+        kadmin.local -q "delete_principal -force ${id}"  \
             |  sed -e '/Authenticating as principal/d' -e '/Make sure that you have removed/d'
     fi
-    
-    ldapdelete -v -H ldapi:/// -D "$LDAPADMIN"  -w "$ADPASSWD" "uid=${uid},ou=people,$BASEDN"  "cn=${uid},ou=groups,$BASEDN" 2>&1 \
-        | sed '/ldap_initialize/d' 
-    
-    if [ -d ${HOMES}/${uid} ] ; then
-        KEEPDIR="${HOMES}/rm_$(date '+%Y%m%d')_${uid}"
-        mv ${HOMES}/${uid} "${KEEPDIR}"
+
+    ldapdelete -v -H ldapi:/// -D "$LDAPADMIN"  -w "$ADPASSWD" "uid=${id},ou=people,$BASEDN"  "cn=${id},ou=groups,$BASEDN" 2>&1 \
+        | sed '/ldap_initialize/d'
+
+    if [ -d ${HOMES}/${id} ] ; then
+        KEEPDIR="${HOMES}/rm_$(date '+%Y%m%d')_${id}"
+        mv ${HOMES}/${id} "${KEEPDIR}"
         chown -R root:root  "${KEEPDIR}"
         ls -ld "$KEEPDIR"
     fi
 }
-    
+
+
+del-host(){
+    if [ $KRB5 ] ; then
+        ## Remove kerberos principals from LDAP.
+        kadmin.local -q "delete_principal -force host/${id}.${domain}"  \
+            |  sed -e '/Authenticating as principal/d' -e '/Make sure that you have removed/d'
+        kadmin.local -q "delete_principal -force nfs/${id}.${domain}"  \
+            |  sed -e '/Authenticating as principal/d' -e '/Make sure that you have removed/d'
+    fi
+}
+
 ##############################
 ########### main #############
 ##############################
@@ -133,6 +152,9 @@ case $COMMAND in
         ;;
     deluser)
         del-user
+        ;;
+    delhost)
+        del-host
         ;;
     *)
         usage
