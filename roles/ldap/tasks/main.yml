@@ -92,7 +92,7 @@
     bind_dn: "cn=admin,{{ basedn }}"
     bind_pw: "{{ ldap_admin_pwd['content'] | b64decode | replace('\n', '') }}"
 
-- name: provide simple script to add/delete users
+- name: provide simple script to manage ldap/kdc
   template:
     src: debian-lan.j2
     dest: /usr/local/bin/debian-lan

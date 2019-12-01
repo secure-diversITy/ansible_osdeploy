@@ -8,27 +8,45 @@ set -eu
 usage(){
     cat <<EOF
 Usage:
-         $(basename $0)  adduser  <uid>  <password>  [<cn>] [<sn>]
+         $(basename $0)  adduser  <uid>  <password>  [<given name>]  [<family name>]
          $(basename $0)  deluser  <uid>
          $(basename $0)  delhost  <hostname>
          $(basename $0)  ldapvi
+         $(basename $0)  <file>
 
-     <uid>:        User ID (login name)
-     <password>:   Password
-     <cn>, <sn>:   LDAP attributes, if omitted, <uid> is used.
+     <uid>:  User ID (login name)
+     <password>:  Password
+     <given name>, <family name>:  LDAP attributes 'givenName' and 'sn'.  If omitted, <uid> is used.
+     <file>:  File containing lines of the form:
 
+                   adduser <uid 1>  <password 1>  [<given name 1>]  [<family name 1>]
+                   adduser <uid 2>  <password 2>  [<given name 2>]  [<family name 2>]
+                   …
+                   deluser <uid n>
+                   deluser <uid n+1>
+                   …
+                           Every line is processed like a single call to the $(basename $0) program.
 EOF
 }
-
-#sss_cache -U -G  ## should not be necessary
 
 BASEDN="{{ basedn }}"
 LDAPADMIN="cn=admin,$BASEDN"
 ADPASSWD="$(cat {{ ldap_admin_pwd_file }})"
 
 if [ $# -lt 2 ] ; then
-    if [ "$1" = ldapvi ] ; then
-        exec ldapvi -h ldapi:/// -D "$LDAPADMIN"  -b "$BASEDN" -w "$ADPASSWD"
+    if [ $# = 0 ] ; then
+        usage
+        exit 1
+    elif [ "$1" = ldapvi ] ; then
+        exec ldapvi -m -h ldapi:/// -D "$LDAPADMIN"  -b "$BASEDN" -w "$ADPASSWD"
+    elif [ -r "$1" ]; then
+        ## recursively call this program:
+        while read -r LINE ; do
+            $0 $LINE
+        done < "$1"
+        ## reset cache after mass import/deletion:
+        sss_cache -U -G
+        exit 0
     else
         usage
         exit 1
@@ -46,8 +64,9 @@ HOMES="{{ lan_homes }}"
 COMMAND="$1"
 id="$2"
 pw="${3:-""}"
-cn="${4:-$2}"
+gn="${4:-$2}"
 sn="${5:-$2}"
+
 domain="$(hostname -d)"
 
 if [ -x /usr/sbin/kadmin.local ] ; then
@@ -73,8 +92,12 @@ nextnum(){
 }
 
 add-user(){
-    uidNumber=$(nextnum uidNumber)
-    gidNumber=$(nextnum gidNumber)
+    local id="$1"
+    local pwEntry="$2"
+    local gn="$3"
+    local sn="$4"
+    local uidNumber=$(nextnum uidNumber)
+    local gidNumber=$(nextnum gidNumber)
 
     if [ $uidNumber -ge $MAXID -o $gidNumber -ge $MAXID ] ; then
         echo "Error: $uidNumber and/or $gidNumber exceed max ID number ${MAXID}."
@@ -90,8 +113,10 @@ uidNumber: ${uidNumber}
 gidNumber: ${gidNumber}
 homeDirectory: ${HOMES}/${id}
 loginShell: /bin/bash
-cn: ${cn}
+cn: ${gn} ${sn}
+givenName: ${gn}
 sn: ${sn}
+gecos: ${gn} ${sn}
 ${pwEntry}
 
 dn: cn=${id},ou=groups,$BASEDN
@@ -100,19 +125,21 @@ gidNumber: ${gidNumber}
 ##################################
 EOF
 
-    echo "uidNumber: ${uidNumber}  gidNumber: ${gidNumber}"
-
     if [ $KRB5 ] ; then
         kadmin.local -q "add_principal -policy default -pw \"$pw\" -x dn=\"uid=${id},ou=people,$BASEDN\" ${id}" \
             | sed '/Authenticating as principal/d'
-        cp -r /etc/skel ${HOMES}/${id}
-        chown -R ${uidNumber}:${gidNumber} ${HOMES}/${id}
-        ls -nld ${HOMES}/${id}
+        if [ ! -e "${HOMES}/${id}" ] ; then
+            echo "uidNumber: ${uidNumber}  gidNumber: ${gidNumber}"
+            cp -r /etc/skel ${HOMES}/${id}
+            chown -R ${uidNumber}:${gidNumber} ${HOMES}/${id}
+            ls -nld ${HOMES}/${id}
+        fi
     fi
 }
 
 
 del-user(){
+    local id="$1"
     local KEEPDIR
     if [ $KRB5 ] ; then
         ## Remove all kerberos attributes from LDAP, then the whole DN below.  The latter should be sufficient.
@@ -133,6 +160,7 @@ del-user(){
 
 
 del-host(){
+    local id="$1"
     if [ $KRB5 ] ; then
         ## Remove kerberos principals from LDAP.
         kadmin.local -q "delete_principal -force host/${id}.${domain}"  \
@@ -146,15 +174,16 @@ del-host(){
 ########### main #############
 ##############################
 
+sss_cache -U -G  ## clear cache
 case $COMMAND in
     adduser)
-        add-user
+        add-user "${id}" "${pwEntry}" "${gn}" "${sn}"
         ;;
     deluser)
-        del-user
+        del-user "${id}"
         ;;
     delhost)
-        del-host
+        del-host "${id}"
         ;;
     *)
         usage
