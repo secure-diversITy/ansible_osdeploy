@@ -92,6 +92,16 @@
     bind_dn: "cn=admin,{{ basedn }}"
     bind_pw: "{{ ldap_admin_pwd['content'] | b64decode | replace('\n', '') }}"
 
+- name: add group for all ldapusers
+  ldap_entry:
+    dn: "cn=ldapuser,ou=groups,{{ basedn }}"
+    objectClass:
+      - posixGroup
+    attributes:
+      gidNumber: 18000
+    bind_dn: "cn=admin,{{ basedn }}"
+    bind_pw: "{{ ldap_admin_pwd['content'] | b64decode | replace('\n', '') }}"
+
 - name: provide simple script to manage ldap/kdc
   template:
     src: debian-lan.j2
@@ -124,6 +134,15 @@
       - posixGroup
     attributes:
       gidNumber: 10000
+    bind_dn: "cn=admin,{{ basedn }}"
+    bind_pw: "{{ ldap_admin_pwd['content'] | b64decode | replace('\n', '') }}"
+  when: foo_pwd is defined and foo_pwd | length > 0
+
+- name: add dummy user foo to group ldapuser
+  ldap_attr:
+    dn: "cn=ldapuser,ou=groups,{{ basedn }}"
+    name: memberUid
+    values: foo
     bind_dn: "cn=admin,{{ basedn }}"
     bind_pw: "{{ ldap_admin_pwd['content'] | b64decode | replace('\n', '') }}"
   when: foo_pwd is defined and foo_pwd | length > 0

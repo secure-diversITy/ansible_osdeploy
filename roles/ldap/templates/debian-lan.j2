@@ -125,6 +125,14 @@ gidNumber: ${gidNumber}
 ##################################
 EOF
 
+    cat <<EOF | ldapmodify -H ldapi:/// -D "$LDAPADMIN"  -w "$ADPASSWD" | sed '/^$/d'
+############## LDIF ##############
+dn: cn=ldapuser,ou=groups,$BASEDN
+add: memberUid
+memberUid: ${id}
+##################################
+EOF
+
     if [ $KRB5 ] ; then
         kadmin.local -q "add_principal -policy default -pw \"$pw\" -x dn=\"uid=${id},ou=people,$BASEDN\" ${id}" \
             | sed '/Authenticating as principal/d'
@@ -132,6 +140,7 @@ EOF
             echo "uidNumber: ${uidNumber}  gidNumber: ${gidNumber}"
             cp -r /etc/skel ${HOMES}/${id}
             chown -R ${uidNumber}:${gidNumber} ${HOMES}/${id}
+            #chmod -R o= ${HOMES}/${id}
             ls -nld ${HOMES}/${id}
         fi
     fi
@@ -149,6 +158,14 @@ del-user(){
 
     ldapdelete -v -H ldapi:/// -D "$LDAPADMIN"  -w "$ADPASSWD" "uid=${id},ou=people,$BASEDN"  "cn=${id},ou=groups,$BASEDN" 2>&1 \
         | sed '/ldap_initialize/d'
+
+    cat <<EOF | ldapmodify -H ldapi:/// -D "$LDAPADMIN"  -w "$ADPASSWD" | sed '/^$/d'
+############## LDIF ##############
+dn: cn=ldapuser,ou=groups,$BASEDN
+delete: memberUid
+memberUid: ${id}
+##################################
+EOF
 
     if [ -d ${HOMES}/${id} ] ; then
         KEEPDIR="${HOMES}/rm_$(date '+%Y%m%d')_${id}"
