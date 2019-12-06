@@ -6,24 +6,28 @@ The goal of the "Debian Local Area Network"-project is to make setting
 up Debian in a local area network as easy as possible.  This repository
 offers ansible playbooks and instructions for the following machines:
 
- • Installbox:
+ • installbox:  orchestration of automatic installs in the LAN
      - set up as gateway to some external network (WAN)
-     - providing TFTP installation on the LAN interface
+     - provides TFTP installations on the LAN interface
      - automatic installs: preseeding and ansible playbooks
      - package cache
-     use case: orchestration of automatic installs in the LAN
 
- • Kiosk:
+ • kerberox:  serving a minimalistic kerberized LAN
+     - automatic TFTP installation of clients
+     - centralized home directories on kerberized NFS
+     - simple script to manage users and machines
+
+ • kerberox-client:  the client for the kerberized LAN
+
+ • kiosk:  school's computer, hackerspace, …
      - auto login user
      - reasonable defaults
      - temporary home directory on tmpfs, reset at boot
-     use case: school's computer, hackerspace, …
 
- • Cloudbox:
+ • cloudbox:  nextcloud server in the basement
      - setup of a home cloud server
      - dynamic DNS name
      - …
-     use case: nextcloud server in the basement
 
 Contributions like patches, suggestions, pull requests and/or further
 profiles are highly appreciated!
@@ -35,30 +39,51 @@ profiles are highly appreciated!
 
 Installbox
 ~~~~~~~~~~
- • Debian installation:
+ • standard Debian installation:
    - user 'ansible' in sudo group
    - WAN interface configured and connected
    - LAN interface not configured/managed
 
- • Customize installbox.yml:
-   - set if_lan if necessary
-   - enable/disable installbox2kiosk task
+ • optional:  customize installbox.yml
 
- • Run ansible:
+ • run ansible:
      ssh-copy-id ansible@1.2.3.4
      ansible-playbook installbox.yml -v --become --ask-become-pass -u ansible -i 1.2.3.4,
 
+ • the installbox can be used to install all other profiles
+
+Kerberox
+~~~~~~~~
+ • standard Debian installation:
+   - user 'ansible' in sudo group
+   - WAN interface configured and connected
+   - LAN interface not configured/managed
+
+ • optional:  customize kerberox.yml
+
+ • run ansible:
+     ssh-copy-id ansible@1.2.3.4
+     ansible-playbook installbox.yml -v --become --ask-become-pass -u ansible -i 1.2.3.4,
+
+Kerberox and installbox provide a local ansible configuration space
+which can be used to install clients and/or to check/modify the local
+installation.  To do the latter, cd into 'debian-lan' and run:
+
+   'ansible-playbook --ask-become-pass -v  -i localhost, -c local  kerberox.yml'
+
+The kerberox-clients are automatically installed using the included TFTP netboot
+installer within the LAN.
 
 Kiosk
 ~~~~~
  • Debian installation:
    - user 'ansible' in sudo group
 
- • Customize kiosk.yml:
+ • customize kiosk.yml:
    - WiFi parameters
    - package selection: extra_pkgs and extra_pkgs_bpo for backports
    - desktop environment
 
- • Run ansible:
+ • run ansible:
      ssh-copy-id ansible@1.2.3.4
      ansible-playbook kiosk.yml -v --become --ask-become-pass -u ansible -i 1.2.3.4,
