@@ -16,3 +16,18 @@
     dest: /etc/ssh/ssh_config
     line: "GSSAPIDelegateCredentials yes"
     insertafter: "#   GSSAPIDelegateCredentials no"
+
+
+- name: check if firewox is available
+  stat: path=/etc/firefox-esr/firefox-esr.js
+  register: firefox
+
+- name: kerberize firefox for sites in the local domain
+  lineinfile:
+    dest: /etc/firefox-esr/firefox-esr.js
+    line: "{{ item }}"
+  with_items:
+    - '// kerberize for sites in the local domain:'
+    - 'pref("network.negotiate-auth.delegation-uris", "{{ ansible_domain }}");'
+    - 'pref("network.negotiate-auth.trusted-uris", "{{ ansible_domain }}");'
+  when: firefox.stat.exists
