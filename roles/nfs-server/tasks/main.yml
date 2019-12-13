@@ -67,7 +67,7 @@
   when: kadmin.stat.exists
 
 - name: copy home from /etc/skel for dummy user foo
-  shell: cp -r /etc/skel {{ lan_homes }}/foo && chmod -R o-rwx {{ lan_homes }}/foo && chown -R 10000:10000 {{ lan_homes }}/foo
+  shell: cp -r /etc/skel {{ lan_homes }}/foo && chmod -R o-rwx {{ lan_homes }}/foo && chown -R {{ min_id }}:{{ min_id }} {{ lan_homes }}/foo
   args:
     creates: "{{ lan_homes }}/foo"
   when: foo_pwd is defined and foo_pwd | length > 0

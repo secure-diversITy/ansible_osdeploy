@@ -19,5 +19,5 @@ krb5_server = {{ krb_server }}
 krb5_realm = {{ ansible_domain | upper }}
 cache_credentials = true
 
-min_id = 10000
-max_id = 20000
+min_id = {{ min_id_sssd }}
+max_id = {{ max_id_sssd }}

@@ -3,3 +3,5 @@ basedn: "{{ 'dc=' + ( ansible_domain | replace('^.','') | replace('.$','') | rep
 ldap_server: ldap
 krb_server: kerberos
 nfs_server: nfs
+min_id_sssd: 5000
+max_id_sssd: 20000

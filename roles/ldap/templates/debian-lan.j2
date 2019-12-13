@@ -57,8 +57,8 @@ elif [ $1 = adduser -a $# -lt 3 ] ; then
     exit 1
 fi
 
-MINID=10000
-MAXID=20000
+MINID={{ min_id }}
+MAXID={{ max_id }}
 HOMES="{{ lan_homes }}"
 
 COMMAND="$1"
