@@ -69,6 +69,18 @@
     replace: '\1	ldap'
   when: not slapd.stat.exists
 
+- name: add URI to ldap.conf
+  lineinfile:
+    dest: /etc/ldap/ldap.conf
+    line: "URI ldapi:///"
+    insertafter: "#URI.*"
+
+- name: add BASE to ldap.conf
+  lineinfile:
+    dest: /etc/ldap/ldap.conf
+    line: "BASE {{ basedn }}"
+    insertafter: "#BASE.*"
+
 #######################################################################################
 ## Use the admin password saved to file from now on (available also after installation):
 - name: slurp admin password

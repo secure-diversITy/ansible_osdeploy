@@ -33,6 +33,23 @@
       - nfs-common
     state: latest
 
+- name: add URI to ldap.conf
+  lineinfile:
+    dest: /etc/ldap/ldap.conf
+    line: "URI ldap://ldap/"
+    insertafter: "#URI.*"
+
+- name: add BASE to ldap.conf
+  lineinfile:
+    dest: /etc/ldap/ldap.conf
+    line: "BASE {{ basedn }}"
+    insertafter: "#BASE.*"
+
+- name: enable pam_umask
+  lineinfile:
+    dest: /etc/pam.d/common-session
+    line: "session optional	pam_umask.so usergroups"
+
 ## oddjob-mkhomedir works only with sec=sys for the NFSv4 share
 
 - name: install extra packages from stable
