@@ -8,7 +8,7 @@ set -eu
 usage(){
     cat <<EOF
 Usage:
-         $(basename $0)  adduser  <uid>  <password>  [<given name>]  [<family name>]
+         $(basename $0)  adduser  <uid>  <password>  [<given name>]  [<family name>]  [<group>]
          $(basename $0)  deluser  <uid>
          $(basename $0)  delhost  <hostname>
          $(basename $0)  ldapvi
@@ -17,6 +17,7 @@ Usage:
      <uid>:  User ID (login name)
      <password>:  Password
      <given name>, <family name>:  LDAP attributes 'givenName' and 'sn'.  If omitted, <uid> is used.
+     <group>:  If given, the user is added to this posix group, which must already exist.
      <file>:  File containing lines of the form:
 
                    adduser <uid 1>  <password 1>  [<given name 1>]  [<family name 1>]
@@ -66,6 +67,7 @@ id="$2"
 pw="${3:-""}"
 gn="${4:-$2}"
 sn="${5:-$2}"
+grp="${6:-""}"
 
 domain="$(hostname -d)"
 
@@ -125,13 +127,15 @@ gidNumber: ${gidNumber}
 ##################################
 EOF
 
-    cat <<EOF | ldapmodify -H ldapi:/// -D "$LDAPADMIN"  -w "$ADPASSWD" | sed '/^$/d'
+    if [ -n "$grp" ] ; then
+        cat <<EOF | ldapmodify -H ldapi:/// -D "$LDAPADMIN"  -w "$ADPASSWD" | sed '/^$/d'
 ############## LDIF ##############
-dn: cn=ldapuser,ou=groups,$BASEDN
+dn: cn=${grp},ou=groups,$BASEDN
 add: memberUid
 memberUid: ${id}
 ##################################
 EOF
+    fi
 
     if [ $KRB5 ] ; then
         kadmin.local -q "add_principal -policy default -pw \"$pw\" -x dn=\"uid=${id},ou=people,$BASEDN\" ${id}" \
@@ -160,13 +164,16 @@ del-user(){
     ldapdelete -v -H ldapi:/// -D "$LDAPADMIN"  -w "$ADPASSWD" "uid=${id},ou=people,$BASEDN"  "cn=${id},ou=groups,$BASEDN" 2>&1 \
         | sed '/ldap_initialize/d'
 
-    cat <<EOF | ldapmodify -H ldapi:/// -D "$LDAPADMIN"  -w "$ADPASSWD" | sed '/^$/d'
+    for grp in $(ldapsearch -Y EXTERNAL -H ldapi:/// -LLL -b "ou=groups,$BASEDN" "(&(objectClass=posixGroup)(memberUid=${id}))" cn 2>/dev/null \
+                     | grep cn: | cut -d ' ' -f2) ; do
+        cat <<EOF | ldapmodify -H ldapi:/// -D "$LDAPADMIN"  -w "$ADPASSWD" | sed '/^$/d'
 ############## LDIF ##############
-dn: cn=ldapuser,ou=groups,$BASEDN
+dn: cn=${grp},ou=groups,$BASEDN
 delete: memberUid
 memberUid: ${id}
 ##################################
 EOF
+    done
 
     if [ -d ${HOMES}/${id:0:1}/${id} ] ; then
         KEEPDIR="${HOMES}/${id:0:1}/rm_$(date '+%Y%m%d')_${id}"
