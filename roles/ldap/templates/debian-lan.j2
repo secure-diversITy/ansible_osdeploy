@@ -111,7 +111,7 @@ objectClass: inetOrgPerson
 objectClass: posixAccount
 uidNumber: ${uidNumber}
 gidNumber: ${gidNumber}
-homeDirectory: ${HOMES}/${id}
+homeDirectory: ${HOMES}/${id:0:1}/${id}
 loginShell: /bin/bash
 cn: ${gn} ${sn}
 givenName: ${gn}
@@ -136,12 +136,13 @@ EOF
     if [ $KRB5 ] ; then
         kadmin.local -q "add_principal -policy default -pw \"$pw\" -x dn=\"uid=${id},ou=people,$BASEDN\" ${id}" \
             | sed '/Authenticating as principal/d'
-        if [ ! -e "${HOMES}/${id}" ] ; then
+        if [ ! -e "${HOMES}/${id:0:1}/${id}" ] ; then
             echo "uidNumber: ${uidNumber}  gidNumber: ${gidNumber}"
-            cp -r /etc/skel ${HOMES}/${id}
-            chown -R ${uidNumber}:${gidNumber} ${HOMES}/${id}
-            #chmod -R o= ${HOMES}/${id}
-            ls -nld ${HOMES}/${id}
+            mkdir -p ${HOMES}/${id:0:1}/
+            cp -r /etc/skel ${HOMES}/${id:0:1}/${id}
+            chown -R ${uidNumber}:${gidNumber} ${HOMES}/${id:0:1}/${id}
+            #chmod -R o= ${HOMES}/${id:0:1}/${id}
+            ls -nld ${HOMES}/${id:0:1}/${id}
         fi
     fi
 }
@@ -167,9 +168,9 @@ memberUid: ${id}
 ##################################
 EOF
 
-    if [ -d ${HOMES}/${id} ] ; then
-        KEEPDIR="${HOMES}/rm_$(date '+%Y%m%d')_${id}"
-        mv ${HOMES}/${id} "${KEEPDIR}"
+    if [ -d ${HOMES}/${id:0:1}/${id} ] ; then
+        KEEPDIR="${HOMES}/${id:0:1}/rm_$(date '+%Y%m%d')_${id}"
+        mv ${HOMES}/${id:0:1}/${id} "${KEEPDIR}"
         chown -R root:root  "${KEEPDIR}"
         ls -ld "$KEEPDIR"
     fi

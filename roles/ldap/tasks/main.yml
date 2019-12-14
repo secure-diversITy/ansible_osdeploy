@@ -117,7 +117,7 @@
 - name: provide simple script to manage ldap/kdc
   template:
     src: debian-lan.j2
-    dest: /usr/local/bin/debian-lan
+    dest: /usr/local/sbin/debian-lan
     mode: 0744
 
 ## Add user
