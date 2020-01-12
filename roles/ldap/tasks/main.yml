@@ -104,13 +104,13 @@
     bind_dn: "cn=admin,{{ basedn }}"
     bind_pw: "{{ ldap_admin_pwd['content'] | b64decode | replace('\n', '') }}"
 
-- name: add group for all ldapusers
+- name: add group for ldap users
   ldap_entry:
     dn: "cn=ldapuser,ou=groups,{{ basedn }}"
     objectClass:
       - posixGroup
     attributes:
-      gidNumber: 18000
+      gidNumber: "{{ ldapuser_gid }}"
     bind_dn: "cn=admin,{{ basedn }}"
     bind_pw: "{{ ldap_admin_pwd['content'] | b64decode | replace('\n', '') }}"
 
@@ -131,8 +131,8 @@
       cn: foo
       sn: bar
       userPassword: "{{ foo_pwd }}"
-      uidNumber: 10000
-      gidNumber: 10000
+      uidNumber: "{{ min_id }}"
+      gidNumber: "{{ min_id }}"
       homeDirectory: "{{ lan_homes }}/foo"
       loginShell: /bin/bash
     bind_dn: "cn=admin,{{ basedn }}"
@@ -145,16 +145,7 @@
     objectClass:
       - posixGroup
     attributes:
-      gidNumber: 10000
-    bind_dn: "cn=admin,{{ basedn }}"
-    bind_pw: "{{ ldap_admin_pwd['content'] | b64decode | replace('\n', '') }}"
-  when: foo_pwd is defined and foo_pwd | length > 0
-
-- name: add dummy user foo to group ldapuser
-  ldap_attr:
-    dn: "cn=ldapuser,ou=groups,{{ basedn }}"
-    name: memberUid
-    values: foo
+      gidNumber: "{{ min_id }}"
     bind_dn: "cn=admin,{{ basedn }}"
     bind_pw: "{{ ldap_admin_pwd['content'] | b64decode | replace('\n', '') }}"
   when: foo_pwd is defined and foo_pwd | length > 0

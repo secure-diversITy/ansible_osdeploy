@@ -8,7 +8,7 @@ set -eu
 usage(){
     cat <<EOF
 Usage:
-         $(basename $0)  adduser  <uid>  <password>  [<given name>]  [<family name>]  [<group>]
+         $(basename $0)  adduser  <uid>  <password>  [<group>]  [<given name>]  [<family name>]
          $(basename $0)  deluser  <uid>
          $(basename $0)  delhost  <hostname>
          $(basename $0)  ldapvi
@@ -16,12 +16,13 @@ Usage:
 
      <uid>:  User ID (login name)
      <password>:  Password
+     <group>:  If given, the user is added to this posix group (in addition to his personal group).
+               The group must already exist in the LDAP DT.
      <given name>, <family name>:  LDAP attributes 'givenName' and 'sn'.  If omitted, <uid> is used.
-     <group>:  If given, the user is added to this posix group, which must already exist.
      <file>:  File containing lines of the form:
 
-                   adduser <uid 1>  <password 1>  [<given name 1>]  [<family name 1>]
-                   adduser <uid 2>  <password 2>  [<given name 2>]  [<family name 2>]
+                   adduser <uid 1>  <password 1>  [<group 1>]  [<given name 1>]  [<family name 1>]
+                   adduser <uid 2>  <password 2>  [<group 2>]  [<given name 2>]  [<family name 2>]
                    …
                    deluser <uid n>
                    deluser <uid n+1>
@@ -58,16 +59,21 @@ elif [ $1 = adduser -a $# -lt 3 ] ; then
     exit 1
 fi
 
+## Range of user and personal group IDs:
 MINID={{ min_id }}
 MAXID={{ max_id }}
+
+## Range to cover in a single ldap search (must be smaller than 'olcSizeLimit' in cn=config):
+RANGE=399
+
 HOMES="{{ lan_homes }}"
 
 COMMAND="$1"
 id="$2"
 pw="${3:-""}"
-gn="${4:-$2}"
-sn="${5:-$2}"
-grp="${6:-""}"
+grp="${4:-""}"
+gn="${5:-$2}"
+sn="${6:-$2}"
 
 domain="$(hostname -d)"
 
@@ -79,27 +85,54 @@ else
     pwEntry="userPassword: $pw"
 fi
 
-#############
-
+##################################################################################################
 
 nextnum(){
-    local num
-    num="$(( $(ldapsearch -Y EXTERNAL -H ldapi:/// -LLL -b "ou=people,$BASEDN" -S $1 $1 2>/dev/null \
-                        |  tail -n -2 | grep -oE "[[:digit:]]+$") + 1 ))"
-    if [ $num -lt $MINID ] ; then
-        echo $MINID
-    else
-        echo "$num"
-    fi
+    local id=$MINID
+    local bsta bend all uids gids num
+
+    ## Search for the next pair of identical free IDs:
+    while [ $id -le $MAXID ] ; do
+        bsta=$id
+        bend=$(( $bsta + $RANGE ))
+
+        all="$(seq $bsta $bend)"
+        uids="$(ldapsearch -Y EXTERNAL -H ldapi:/// -LLL -b "ou=people,$BASEDN" "(&(objectClass=posixAccount)(uidNumber>=$bsta)(uidNumber<=$bend))" \
+                         uidNumber 2>/dev/null | grep "uidNumber: " | cut -f2 -d ' ' | sort -g | uniq)"
+        gids="$(ldapsearch -Y EXTERNAL -H ldapi:/// -LLL -b "ou=groups,$BASEDN" "(&(objectClass=posixGroup)(gidNumber>=$bsta)(uidNumber<=$bend))" \
+                         gidNumber 2>/dev/null | grep "gidNumber: " | cut -f2 -d ' ' | sort -g | uniq)"
+
+        fuids="$(comm -13 <(echo "$uids") <(echo "$all"))"
+        fgids="$(comm -13 <(echo "$gids") <(echo "$all"))"
+        num=$(comm -12 <(echo "$fuids") <(echo "$fgids") | head -1)
+
+        if [ -n "$num" ] ; then
+            echo $num
+            return
+        else
+            id=$(( $bend + 1 ))
+        fi
+    done
+    ## something went wrong:
+    exit 1
 }
+
 
 add-user(){
     local id="$1"
     local pwEntry="$2"
-    local gn="$3"
-    local sn="$4"
-    local uidNumber=$(nextnum uidNumber)
-    local gidNumber=$(nextnum gidNumber)
+    local grp="$3"
+    local gn="$4"
+    local sn="$5"
+
+    if ldapsearch -Y EXTERNAL -H ldapi:/// -LLL -b "ou=people,$BASEDN" "(&(objectClass=posixAccount)(uid=$id))" uid 2>/dev/null \
+            | grep -q "uid: $id" ; then
+        echo "User '$id' exists already, skipping."
+        return
+    fi
+
+    local uidNumber=$(nextnum)
+    local gidNumber=$uidNumber
 
     if [ $uidNumber -ge $MAXID -o $gidNumber -ge $MAXID ] ; then
         echo "Error: $uidNumber and/or $gidNumber exceed max ID number ${MAXID}."
@@ -200,9 +233,10 @@ del-host(){
 ##############################
 
 sss_cache -U -G  ## clear cache
+echo "==== $@ ===="
 case $COMMAND in
     adduser)
-        add-user "${id}" "${pwEntry}" "${gn}" "${sn}"
+        add-user "${id}" "${pwEntry}" "${grp}" "${gn}" "${sn}"
         ;;
     deluser)
         del-user "${id}"

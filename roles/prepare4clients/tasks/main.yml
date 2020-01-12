@@ -100,7 +100,7 @@
 
 ########  kerberox-client #######
 
-- name: check if we opereate on kerberox
+- name: check if we operate on kerberox
   stat: path=/usr/sbin/krb5kdc
   register: krb5kdc
 
