@@ -1,0 +1,151 @@
+## Install and configure nextcloud
+
+- name: install apache, php- and db-packages
+  apt:
+    name:
+      - apache2
+      - mariadb-server
+      - python3-pymysql
+      - php-apcu
+      - php-fpm
+      - php-curl
+      - php-gd
+      - php-imagick
+      - php-intl
+      - php-json
+      - php-ldap
+      - php-mbstring
+      - php-mysql
+      - php-xml
+      - php-zip
+    state: latest
+
+- name: disable apache modules
+  apache2_module:
+    state: absent
+    name: "{{ item }}"
+  with_items:
+    - mpm_prefork
+    - mpm_worker
+  notify: "restart apache2"
+
+- name: enable apache modules
+  apache2_module:
+    name: "{{ item }}"
+  with_items:
+    - proxy_fcgi
+    - mpm_event
+    - ssl
+    - http2
+  notify: "restart apache2"
+
+- name: find php version
+  shell: ls /etc/php/ | sort | tail -1
+  register: php_ver
+  changed_when: False
+
+- name: enable php-fpm conf
+  command: a2enconf php{{ php_ver.stdout }}-fpm
+  args:
+    creates: /etc/apache2/conf-enabled/php{{ php_ver.stdout }}-fpm.conf
+  notify: "restart apache2"
+
+- name: tune php-fpm
+  replace:
+    dest: /etc/php/{{ php_ver.stdout }}/fpm/pool.d/www.conf
+    regexp: "{{ item.regex }}"
+    replace: "{{ item.replace }}"
+  with_items:
+    - { regex: "^pm.max_children = .*$", replace: "pm.max_children = 120" }
+    - { regex: "^pm.start_servers = .*$", replace: "pm.start_servers = 12" }
+    - { regex: "^pm.min_spare_servers = .*$", replace: "pm.min_spare_servers = 6" }
+    - { regex: "^pm.max_spare_servers = .*$", replace: "pm.max_spare_servers = 18" }
+  notify: "restart php-fpm"
+
+- name: increase php memory limit
+  replace:
+    dest: "/etc/php/{{ php_ver.stdout }}/fpm/php.ini"
+    regexp: "^memory_limit = .*"
+    replace: "memory_limit = 512M"
+  notify: "restart apache2"
+
+- name: provide nextcloud site
+  copy:
+    src: nextcloud.conf
+    dest: /etc/apache2/sites-available/nextcloud.conf
+
+- name: enable https
+  command: a2ensite default-ssl.conf
+  args:
+    creates: /etc/apache2/sites-enabled/default-ssl.conf
+  notify: "restart apache2"
+
+- name: enable nextcloud site
+  command: a2ensite nextcloud.conf
+  args:
+    creates: /etc/apache2/sites-enabled/nextcloud.conf
+  notify: "restart apache2"
+
+- name: create a new database with name 'nextcloud'
+  mysql_db:
+    login_unix_socket: /var/run/mysqld/mysqld.sock
+    name: nextcloud
+    state: present
+
+- name: create database user 'nextcloud'
+  mysql_user:
+    login_unix_socket: /var/run/mysqld/mysqld.sock
+    name: nextcloud
+    password: "{{ db_nextcloud_pwd }}"
+    priv: 'nextcloud.*:ALL'
+    state: present
+
+- name: unpack nextcloud archive
+  unarchive:
+    src: nextcloud.tar.bz2
+    dest: "{{ www_root }}"
+    owner: www-data
+    group: www-data
+    creates: "{{ nc_dir }}"
+
+- name: make sure data directory exists
+  file:
+    path: "{{ data_dir }}"
+    state: directory
+    owner: www-data
+    group: www-data
+    recurse: yes
+
+- name: initialize nextcloud
+  command:
+    cmd: >
+      sudo -u www-data php occ maintenance:install
+      --database "mysql"
+      --database-name "nextcloud"
+      --database-user "nextcloud"
+      --database-pass "{{ db_nextcloud_pwd }}"
+      --admin-user "nc-admin"
+      --admin-pass "{{ nc_admin_pwd }}"
+      --data-dir "{{ data_dir }}"
+  args:
+    chdir: "{{ nc_dir }}"
+    creates: "{{ nc_dir }}/config/config.php"
+  no_log: true
+
+- name: dump nc-admin password
+  shell: echo -n "{{ nc_admin_pwd }}" > "{{ nc_admin_pwd_file }}" ; chmod 0600 "{{ nc_admin_pwd_file }}"
+  no_log: true
+  args:
+    creates: "{{ nc_admin_pwd_file }}"
+
+- name: enable APCu memcache
+  lineinfile:
+    dest: "{{ nc_dir }}/config/config.php"
+    line: "  'memcache.local' => '\\OC\\Memcache\\APCu',"
+    insertbefore: "'installed' => true,"
+
+- name: allow access from LAN
+  lineinfile:
+    dest: "{{ nc_dir }}/config/config.php"
+    line: "    1 => '192.168.*.*',"
+    insertafter: "0 => 'localhost',"

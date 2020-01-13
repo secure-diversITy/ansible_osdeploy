@@ -63,7 +63,7 @@ Kerberox
 
  • run ansible:
      ssh-copy-id ansible@1.2.3.4
-     ansible-playbook installbox.yml -v --become --ask-become-pass -u ansible -i 1.2.3.4,
+     ansible-playbook kerberox.yml -v --become --ask-become-pass -u ansible -i 1.2.3.4,
 
 Kerberox and installbox provide a local ansible configuration space
 which can be used to install clients and/or to check/modify the local
