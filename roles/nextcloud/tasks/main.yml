@@ -100,6 +100,10 @@
     priv: 'nextcloud.*:ALL'
     state: present
 
+- name: check if we are installing
+  stat: path="{{ nc_dir }}"
+  register: nextcloud
+
 - name: unpack nextcloud archive
   unarchive:
     src: nextcloud.tar.bz2
@@ -114,12 +118,12 @@
     state: directory
     owner: www-data
     group: www-data
-    recurse: yes
+    recurse: Yes
 
 - name: initialize nextcloud
   command:
     cmd: >
-      sudo -u www-data php occ maintenance:install
+      sudo -u www-data php ./occ maintenance:install
       --database "mysql"
       --database-name "nextcloud"
       --database-user "nextcloud"
@@ -130,22 +134,26 @@
   args:
     chdir: "{{ nc_dir }}"
     creates: "{{ nc_dir }}/config/config.php"
-  no_log: true
+  no_log: True
 
 - name: dump nc-admin password
   shell: echo -n "{{ nc_admin_pwd }}" > "{{ nc_admin_pwd_file }}" ; chmod 0600 "{{ nc_admin_pwd_file }}"
-  no_log: true
+  no_log: True
   args:
     creates: "{{ nc_admin_pwd_file }}"
 
 - name: enable APCu memcache
-  lineinfile:
-    dest: "{{ nc_dir }}/config/config.php"
-    line: "  'memcache.local' => '\\OC\\Memcache\\APCu',"
-    insertbefore: "'installed' => true,"
+  command: sudo -u www-data php ./occ config:system:set memcache.local --value='\OC\Memcache\APCu'
+  args:
+    chdir: "{{ nc_dir }}"
+    warn: False
+  when: not nextcloud.stat.exists
 
 - name: allow access from LAN
-  lineinfile:
-    dest: "{{ nc_dir }}/config/config.php"
-    line: "    1 => '192.168.*.*',"
-    insertafter: "0 => 'localhost',"
+  command: sudo -u www-data php ./occ config:system:set trusted_domains 1 --value='192.168.*.*'
+  args:
+    chdir: "{{ nc_dir }}"
+    warn: False
+  when: not nextcloud.stat.exists
+
+## ToDo: enable apps etc., update
