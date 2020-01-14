@@ -35,6 +35,8 @@
   with_items:
     - proxy_fcgi
     - mpm_event
+    - rewrite
+    - headers
     - ssl
     - http2
   notify: "restart apache2"
@@ -74,6 +76,11 @@
     src: nextcloud.conf
     dest: /etc/apache2/sites-available/nextcloud.conf
 
+- name: provide htaccess file
+  copy:
+    src: htaccess
+    dest: /var/www/html/.htaccess
+
 - name: enable https
   command: a2ensite default-ssl.conf
   args:
@@ -86,11 +93,26 @@
     creates: /etc/apache2/sites-enabled/nextcloud.conf
   notify: "restart apache2"
 
-- name: create a new database with name 'nextcloud'
+- name: make sure data directory exists
+  file:
+    path: "{{ data_dir }}"
+    state: directory
+    owner: www-data
+    group: www-data
+    recurse: Yes
+
+
+## install nextcloud:
+- name: check if we are installing
+  stat: path="{{ nc_dir }}"
+  register: nextcloud
+
+- name: create database with name 'nextcloud'
   mysql_db:
     login_unix_socket: /var/run/mysqld/mysqld.sock
     name: nextcloud
     state: present
+  when: not nextcloud.stat.exists
 
 - name: create database user 'nextcloud'
   mysql_user:
@@ -99,10 +121,7 @@
     password: "{{ db_nextcloud_pwd }}"
     priv: 'nextcloud.*:ALL'
     state: present
-
-- name: check if we are installing
-  stat: path="{{ nc_dir }}"
-  register: nextcloud
+  when: not nextcloud.stat.exists
 
 - name: unpack nextcloud archive
   unarchive:
@@ -110,15 +129,7 @@
     dest: "{{ www_root }}"
     owner: www-data
     group: www-data
-    creates: "{{ nc_dir }}"
-
-- name: make sure data directory exists
-  file:
-    path: "{{ data_dir }}"
-    state: directory
-    owner: www-data
-    group: www-data
-    recurse: Yes
+  when: not nextcloud.stat.exists
 
 - name: initialize nextcloud
   command:
@@ -133,14 +144,13 @@
       --data-dir "{{ data_dir }}"
   args:
     chdir: "{{ nc_dir }}"
-    creates: "{{ nc_dir }}/config/config.php"
   no_log: True
+  when: not nextcloud.stat.exists
 
 - name: dump nc-admin password
   shell: echo -n "{{ nc_admin_pwd }}" > "{{ nc_admin_pwd_file }}" ; chmod 0600 "{{ nc_admin_pwd_file }}"
   no_log: True
-  args:
-    creates: "{{ nc_admin_pwd_file }}"
+  when: not nextcloud.stat.exists
 
 - name: enable APCu memcache
   command: sudo -u www-data php ./occ config:system:set memcache.local --value='\OC\Memcache\APCu'
@@ -156,4 +166,26 @@
     warn: False
   when: not nextcloud.stat.exists
 
-## ToDo: enable apps etc., update
+
+## app installations:
+- name: check if calendar app is installed
+  stat: path="{{ nc_dir }}/apps/calendar"
+  register: calendar
+
+- name: install calendar app
+  command: sudo -u www-data php ./occ app:install calendar
+  args:
+    chdir: "{{ nc_dir }}"
+    warn: False
+  when: not calendar.stat.exists
+
+- name: check if notes app is installed
+  stat: path="{{ nc_dir }}/apps/notes"
+  register: notes
+
+- name: install notes app
+  command: sudo -u www-data php ./occ app:install notes
+  args:
+    chdir: "{{ nc_dir }}"
+    warn: False
+  when: not notes.stat.exists
