@@ -75,22 +75,32 @@
   copy:
     src: nextcloud.conf
     dest: /etc/apache2/sites-available/nextcloud.conf
+  notify: "restart apache2"
 
-- name: provide htaccess file
+- name: provide kerberos SSO config
   copy:
-    src: htaccess
-    dest: /var/www/html/.htaccess
-
-- name: enable https
-  command: a2ensite default-ssl.conf
-  args:
-    creates: /etc/apache2/sites-enabled/default-ssl.conf
+    src: krb5-nextcloud.conf
+    dest: /etc/apache2/sites-available/krb5-nextcloud.conf
+  when: "'kerberize' in role_names"
   notify: "restart apache2"
 
 - name: enable nextcloud site
   command: a2ensite nextcloud.conf
   args:
     creates: /etc/apache2/sites-enabled/nextcloud.conf
+  notify: "restart apache2"
+
+- name: enable kerberos access to nextcloud site
+  command: a2ensite krb5-nextcloud.conf
+  args:
+    creates: /etc/apache2/sites-enabled/krb5-nextcloud.conf
+  notify: "restart apache2"
+  when: "'kerberize' in role_names"
+
+- name: enable https
+  command: a2ensite default-ssl.conf
+  args:
+    creates: /etc/apache2/sites-enabled/default-ssl.conf
   notify: "restart apache2"
 
 - name: make sure data directory exists
