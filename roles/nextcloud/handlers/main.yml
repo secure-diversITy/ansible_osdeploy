@@ -9,3 +9,10 @@
     name: php{{ php_ver.stdout }}-fpm
     state: restarted
   listen: "restart php-fpm"
+
+- name: enable nextcloudcron.service and .timer
+  systemd:
+    name: nextcloudcron.timer
+    state: started
+    enabled: True
+  listen: "enable nextcloudcron.service"

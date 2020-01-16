@@ -199,3 +199,28 @@
     chdir: "{{ nc_dir }}"
     warn: False
   when: not notes.stat.exists
+
+## nextcloudcron
+- name: provide nextcloudcron.service and .timer
+  copy:
+    src: "{{ item }}"
+    dest: "/etc/systemd/system/{{ item }}"
+  with_items:
+    - nextcloudcron.service
+    - nextcloudcron.timer
+  register: nextcloudcron
+  notify: "enable nextcloudcron.service"
+
+- name: switch to systemd timer
+  command: sudo -u www-data php ./occ background:cron
+  args:
+    chdir: "{{ nc_dir }}"
+    warn: False
+  when: nextcloudcron.changed
+
+
+## ToDo kerberox integration:
+# sudo -u www-data php ./occ app:enable user_ldap
+# sudo -u www-data php ./occ app:install user_saml
+
+# sudo -u www-data php ./occ ldap
