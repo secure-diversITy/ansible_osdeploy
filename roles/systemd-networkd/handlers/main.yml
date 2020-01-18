@@ -2,12 +2,14 @@
   systemd:
     name: systemd-networkd
     enabled: yes
+    state: restarted
     daemon_reload: yes
-  listen: "enable systemd-networkd"
+  listen: "start and enable systemd-networkd"
 
-- name: enable systemd-resolved
-  systemd:
-    name: systemd-resolved
-    enabled: yes
-    daemon_reload: yes
-  listen: "enable systemd-resolved"
+- name: use systemd-resolved
+  file:
+    src: /run/systemd/resolve/stub-resolv.conf
+    dest: /etc/resolv.conf
+    state: link
+    force: Yes
+  listen: "use systemd-resolved"

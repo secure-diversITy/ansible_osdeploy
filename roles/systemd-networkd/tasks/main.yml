@@ -1,8 +1,16 @@
+- name: check if /etc/network/interfaces is still there
+  stat: path=/etc/network/interfaces
+  register: interfaces
+
+- name: move /etc/network/interfaces away
+  command: mv /etc/network/interfaces /etc/network/interfaces_disabled
+  when: interfaces.stat.exists
+
 - name: install dynamic configuration for networkd
   copy:
     src: 10-dhcp.network
     dest: /etc/systemd/network/10-dhcp.network
-  notify: "enable systemd-networkd"
+  notify: "start and enable systemd-networkd"
 
 #- name: install static configuration for networkd
 #  template:
@@ -10,10 +18,11 @@
 #    dest: /etc/systemd/network/20-static.network
 #  notify: "enable systemd-networkd"
 
-- name: prepare systemd-resolved
-  file:
-    src: /run/systemd/resolve/resolv.conf
-    dest: /etc/resolv.conf
-    state: link
-    force: yes
-  notify: "enable systemd-resolved"
+- name: enable systemd-resolved
+  systemd:
+    name: systemd-resolved
+    enabled: yes
+    state: started
+  notify: "use systemd-resolved"
+
+- meta: flush_handlers
