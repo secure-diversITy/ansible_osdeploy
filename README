@@ -27,6 +27,7 @@ offers ansible playbooks and instructions for the following machines:
  • cloudbox:  nextcloud server in the basement
      - setup of a home cloud server
      - dynamic DNS name
+     - nextcloud
      - …
 
 Contributions like patches, suggestions, pull requests and/or further

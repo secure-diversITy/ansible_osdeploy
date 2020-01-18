@@ -12,9 +12,10 @@
     DNS: "192.168.2.1"
     ddns_domain: "something.ddnss.de"
     ddns_updkey: "138638.some.key.here.635620"
+    ansible_python_interpreter: "/usr/bin/python3"
+
   roles:
     - up2date-debian
-    - systemd-networkd
-    - web-server
-    - ddns-update
-    - low-power
+#    - ddns-update
+#    - low-power
+    - nextcloud
