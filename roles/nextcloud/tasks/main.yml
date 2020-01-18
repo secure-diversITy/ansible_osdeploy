@@ -178,30 +178,6 @@
     warn: False
   when: not nextcloud.stat.exists
 
-
-## app installations:
-- name: check if calendar app is installed
-  stat: path="{{ nc_dir }}/apps/calendar"
-  register: calendar
-
-- name: install calendar app
-  command: sudo -u www-data php ./occ app:install calendar
-  args:
-    chdir: "{{ nc_dir }}"
-    warn: False
-  when: not calendar.stat.exists
-
-- name: check if notes app is installed
-  stat: path="{{ nc_dir }}/apps/notes"
-  register: notes
-
-- name: install notes app
-  command: sudo -u www-data php ./occ app:install notes
-  args:
-    chdir: "{{ nc_dir }}"
-    warn: False
-  when: not notes.stat.exists
-
 ## nextcloudcron
 - name: provide nextcloudcron.service and .timer
   copy:
@@ -219,6 +195,27 @@
     chdir: "{{ nc_dir }}"
     warn: False
   when: nextcloudcron.changed
+
+- name: check/run upgrade
+  command: sudo -u www-data php updater.phar --no-interaction
+  args:
+    chdir: "{{ nc_dir }}/updater"
+    warn: False
+  register: cmd_result
+  changed_when: cmd_result.stdout is not search('Nothing to do.')
+
+### app installations:
+- name: install extra apps
+  command: "sudo -u www-data php ./occ app:install {{ item }}"
+  args:
+    chdir: "{{ nc_dir }}"
+    warn: False
+  with_items:
+    - calendar
+    - notes
+  register: cmd_result
+  changed_when: cmd_result.stdout is not search('already installed')
+  failed_when:  cmd_result.stdout is not search('already installed') and cmd_result.rc != 0
 
 
 ## ToDo kerberox integration:
