@@ -98,10 +98,13 @@
   when: "'kerberize' in role_names"
 
 - name: enable https
-  command: a2ensite default-ssl.conf
+  shell: 'grep -q "VirtualHost .*:443" * || a2ensite default-ssl.conf'
   args:
-    creates: /etc/apache2/sites-enabled/default-ssl.conf
+    chdir: /etc/apache2/sites-enabled/
+    creates: default-ssl.conf
   notify: "restart apache2"
+  register: cmd_result
+  changed_when: cmd_result.stdout != '' and cmd_result.stdout is not search('skipped')
 
 - name: make sure data directory exists
   file:
@@ -109,7 +112,6 @@
     state: directory
     owner: www-data
     group: www-data
-    recurse: Yes
 
 
 ## install nextcloud:
