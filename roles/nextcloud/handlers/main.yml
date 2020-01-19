@@ -15,4 +15,4 @@
     name: nextcloudcron.timer
     state: started
     enabled: True
-  listen: "enable nextcloudcron.service"
+  listen: "enable nextcloudcron.timer"

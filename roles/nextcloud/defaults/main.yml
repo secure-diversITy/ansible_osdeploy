@@ -4,3 +4,4 @@ nc_admin_pwd_file: "/root/nc-admin.pwd"
 www_root: "/var/www"
 nc_dir: "{{ www_root }}/nextcloud"
 data_dir: "/var/nc-data"
+allow_download: False

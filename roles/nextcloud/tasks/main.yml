@@ -1,4 +1,24 @@
-## Install and configure nextcloud
+## Install and configure nextcloud.
+
+- name: check if we are installing
+  stat: path="{{ nc_dir }}"
+  register: nextcloud
+
+- name: check for nextcloud archive
+  local_action: stat path=nextcloud.tar.bz2
+  become: No
+  register: nc_archive
+  when: not nextcloud.stat.exists
+
+- name: stop if nextcloud archive is unavailable
+  fail:
+    msg: >
+      The nextcloud archive nextcloud.tar.bz2 is not available.
+      Download the latest stable release from 'nextcloud.com',
+      check the signature, rename it and copy it next to 'cloudbox.yml'.
+  when: not nextcloud.stat.exists and not nc_archive.stat.exists
+
+## We can start with the installation now:
 
 - name: install apache, php- and db-packages
   apt:
@@ -113,12 +133,7 @@
     owner: www-data
     group: www-data
 
-
 ## install nextcloud:
-- name: check if we are installing
-  stat: path="{{ nc_dir }}"
-  register: nextcloud
-
 - name: create database with name 'nextcloud'
   mysql_db:
     login_unix_socket: /var/run/mysqld/mysqld.sock
@@ -186,15 +201,7 @@
   with_items:
     - nextcloudcron.service
     - nextcloudcron.timer
-  register: nextcloudcron
-  notify: "enable nextcloudcron.service"
-
-- name: switch to systemd timer
-  command: sudo -u www-data php ./occ background:cron
-  args:
-    chdir: "{{ nc_dir }}"
-    warn: False
-  when: nextcloudcron.changed
+  notify: "enable nextcloudcron.timer"
 
 - name: check/run upgrade
   command: sudo -u www-data php updater.phar --no-interaction
@@ -203,6 +210,7 @@
     warn: False
   register: cmd_result
   changed_when: cmd_result.stdout is not search('Nothing to do.')
+  when: allow_download
 
 ### app installations:
 - name: install extra apps
@@ -216,7 +224,7 @@
   register: cmd_result
   changed_when: cmd_result.stdout is not search('already installed')
   failed_when:  cmd_result.stdout is not search('already installed') and cmd_result.rc != 0
-
+  when: allow_download
 
 ## ToDo kerberox integration:
 # sudo -u www-data php ./occ app:enable user_ldap
