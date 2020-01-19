@@ -1,0 +1,43 @@
+#!/bin/bash
+set -eu
+
+REPOSITORY="{{ backup_repo }}"
+BACKUP=({{ backup_dirs|join(' ') }})
+EXTRAOPTIONS=({{ backup_opts }})
+export BORG_PASSCOMMAND="cat {{ borg_pwd_file }}"
+MOUNTED=""
+
+MNT="$(echo "$REPOSITORY" | sed "s|\(^.*/mnt\).*|\1|")"
+if grep -q "$MNT" /etc/fstab ; then
+    [ -d "$REPOSITORY" ] || mount -v "$MNT" && MOUNTED="TRUE"
+fi
+
+if [ ! -d "$REPOSITORY" ] ; then
+    mkdir -vp --mode=0750 "$REPOSITORY"
+    borg init --encryption=repokey "$REPOSITORY"
+    borg key export "$REPOSITORY" "{{ borg_key_backup }}"
+fi
+
+if [ -e "{{ nc_dir }}/config/config.php" ] ; then
+    NCDB="{{ data_dir }}/nextcloud-database.dump"
+    sudo -u www-data /usr/bin/php {{ nc_dir }}/occ maintenance:mode --on
+    PW="$(grep dbpassword {{ nc_dir }}/config/config.php | \
+                   sed -e "s/\W*'dbpassword' => '//" -e "s/',$//")"
+
+    echo -n "Dumping data base into '$NCDB' … "
+    mysqldump --single-transaction -h localhost -u nextcloud -p"$PW" nextcloud > "$NCDB"
+    chmod 600 "$NCDB"
+    echo  "done."
+fi
+
+ARCHIVE="$(date +%Y-%m-%d-%H:%M)"
+echo "Backup ${BACKUP[@]} to $REPOSITORY."
+borg create -v "${EXTRAOPTIONS[@]}" "$REPOSITORY::$ARCHIVE" "${BACKUP[@]}"
+
+if [ -e "{{ nc_dir }}/config/config.php" ] ; then
+    sudo -u www-data /usr/bin/php {{ nc_dir }}/occ maintenance:mode --off
+fi
+
+if [ "$MOUNTED" = "TRUE" ] ; then
+    umount -v "$MNT"
+fi

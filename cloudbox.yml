@@ -2,9 +2,9 @@
 # This playbook deploys the cloudbox on a minimal installation.
 
 - name: apply configuration to the cloudbox
-  hosts: cloudboxes
+  hosts: all
   remote_user: ansible
-  become: yes
+  become: Yes
   vars:
     if_lan: "enp1s0"
     ipaddr: "192.168.2.50/24"
@@ -12,6 +12,10 @@
     DNS: "192.168.2.1"
     ddns_domain: "something.ddnss.de"
     ddns_updkey: "138638.some.key.here.635620"
+    backup_opts: "--exclude-caches -e '*/updater-*/' -e '*/preview/*' -e '*/files_trashbin/*'"
+    backup_dirs:
+      - "{{ nc_dir }}"
+      - "{{ data_dir }}"
     ansible_python_interpreter: "/usr/bin/python3"
 
   roles:
@@ -19,3 +23,4 @@
 #    - ddns-update
 #    - low-power
     - nextcloud
+    - backup

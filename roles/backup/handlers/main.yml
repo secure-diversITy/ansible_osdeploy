@@ -1,0 +1,6 @@
+- name: enable backup.service and .timer
+  systemd:
+    name: backup.timer
+    state: started
+    enabled: True
+  listen: "enable backup.timer"

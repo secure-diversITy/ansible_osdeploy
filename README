@@ -88,3 +88,20 @@ Kiosk
  • run ansible:
      ssh-copy-id ansible@1.2.3.4
      ansible-playbook kiosk.yml -v --become --ask-become-pass -u ansible -i 1.2.3.4,
+
+Cloudbox
+~~~~~~~~
+ • Debian installation:
+   - user 'ansible' in sudo group
+
+ • check/customize cloudbox.yml
+
+ • download latest nextcloud-*.*.*.tar.bz2 archive and place it as nextcloud.tar.bz2
+   in your debian-lan-ansible directory
+
+ • run ansible:
+     ssh-copy-id ansible@1.2.3.4
+     ansible-playbook cloudbox.yml -v --become --ask-become-pass -u ansible -i 1.2.3.4,
+
+ • use 'nc-admin' with password in '/root/nc-admin.pwd' to log into nextcloud.
+

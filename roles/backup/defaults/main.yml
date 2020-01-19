@@ -1,0 +1,8 @@
+borg_pwd: "{{ lookup('password', '/tmp/borg.pwd length=24') }}"
+borg_pwd_file: "/root/borg.pwd"
+borg_key_backup: "/root/borg-key.backup"
+
+## alternative: "ssh://user@host:port/path/to/repo"
+backup_repo: "/var/backups/mnt/backup/borg"
+
+backup_opts: "--exclude-caches"
