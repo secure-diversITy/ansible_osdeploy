@@ -218,9 +218,7 @@
   args:
     chdir: "{{ nc_dir }}"
     warn: False
-  with_items:
-    - calendar
-    - notes
+  with_items: "{{ nc_apps }}"
   register: cmd_result
   changed_when: cmd_result.stdout is not search('already installed')
   failed_when:  cmd_result.stdout is not search('already installed') and cmd_result.rc != 0

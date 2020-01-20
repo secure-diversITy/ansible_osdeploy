@@ -12,6 +12,9 @@
     DNS: "192.168.2.1"
     ddns_domain: "something.ddnss.de"
     ddns_updkey: "138638.some.key.here.635620"
+    nc_apps:
+      - calendar
+      - notes
     backup_opts: "--exclude-caches -e '*/updater-*/' -e '*/preview/*' -e '*/files_trashbin/*'"
     backup_dirs:
       - "{{ nc_dir }}"
