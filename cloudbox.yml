@@ -17,6 +17,7 @@
       - notes
     backup_opts: "--exclude-caches -e '*/updater-*/' -e '*/preview/*' -e '*/files_trashbin/*'"
     backup_dirs:
+      - "/etc"
       - "{{ nc_dir }}"
       - "{{ data_dir }}"
     ansible_python_interpreter: "/usr/bin/python3"

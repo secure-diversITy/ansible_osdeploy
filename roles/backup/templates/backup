@@ -2,8 +2,8 @@
 set -eu
 
 REPOSITORY="{{ backup_repo }}"
-BACKUP=({{ backup_dirs|join(' ') }})
-EXTRAOPTIONS=({{ backup_opts }})
+BACKUP=({{ backup_dirs|join(' ') }} {{ backup_dirs_extra|join(' ') }})
+EXTRAOPTIONS=({{ backup_opts }} {{ backup_opts_extra }})
 export BORG_PASSCOMMAND="cat {{ borg_pwd_file }}"
 MOUNTED=""
 
