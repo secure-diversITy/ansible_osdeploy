@@ -6,6 +6,7 @@ OPTIONS=({{ backup_opts }} {{ backup_opts_extra }})
 
 export BORG_REPO="{{ backup_repo }}"
 export BORG_PASSCOMMAND="cat {{ borg_pwd_file }}"
+KEY_BACKUP="{{ borg_key_backup }}"
 
 MOUNTED=""
 
@@ -17,7 +18,7 @@ fi
 if [ ! -d "$BORG_REPO" ] ; then
     mkdir -vp --mode=0750 "$BORG_REPO"
     borg init --encryption=repokey
-    borg key export "{{ borg_key_backup }}"
+    borg key export "$BORG_REPO" "$KEY_BACKUP"
 fi
 
 if [ -e "{{ nc_dir }}/config/config.php" ] ; then

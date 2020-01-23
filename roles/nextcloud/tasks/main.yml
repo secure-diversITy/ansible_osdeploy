@@ -20,10 +20,11 @@
 
 ## We can start with the installation now:
 
-- name: install apache, php- and db-packages
+- name: install apache, firewalld, php- and db-packages
   apt:
     name:
       - apache2
+      - firewalld
       - mariadb-server
       - python3-pymysql
       - php-apcu
@@ -38,6 +39,7 @@
       - php-mysql
       - php-xml
       - php-zip
+      - unzip
     state: latest
 
 - name: disable apache modules
@@ -212,7 +214,7 @@
   changed_when: cmd_result.stdout is not search('Nothing to do.')
   when: allow_download
 
-### app installations:
+## app installations:
 - name: install extra apps
   command: "sudo -u www-data php ./occ app:install {{ item }}"
   args:
@@ -223,6 +225,14 @@
   changed_when: cmd_result.stdout is not search('already installed')
   failed_when:  cmd_result.stdout is not search('already installed') and cmd_result.rc != 0
   when: allow_download
+
+- name: allow https in firewalld
+  firewalld:
+    service: https
+    permanent: Yes
+    immediate: Yes
+    state: enabled
+
 
 ## ToDo kerberox integration:
 # sudo -u www-data php ./occ app:enable user_ldap

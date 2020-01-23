@@ -1,4 +1,4 @@
-borg_pwd: "{{ lookup('password', '/tmp/borg.pwd length=24') }}"
+borg_pwd: "{{ lookup('password', '/tmp/borg.pwd length=32') }}"
 borg_pwd_file: "/root/borg.pwd"
 borg_key_backup: "/root/borg-key.backup"
 
