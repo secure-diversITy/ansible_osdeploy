@@ -16,7 +16,9 @@
       The nextcloud archive nextcloud.tar.bz2 is not available.
       Download the latest stable release from 'nextcloud.com',
       check the signature, rename it and copy it next to 'cloudbox.yml'.
-  when: not nextcloud.stat.exists and not nc_archive.stat.exists
+  when: >
+    not nextcloud.stat.exists and not nc_archive.stat.exists and
+    not run_in_installer|default(false)|bool
 
 ## We can start with the installation now:
 
@@ -136,6 +138,10 @@
     group: www-data
 
 ## install nextcloud:
+- name: start mariadb during installation
+  command: /etc/init.d/mysql start
+  when: run_in_installer|default(false)|bool
+
 - name: create database with name 'nextcloud'
   mysql_db:
     login_unix_socket: /var/run/mysqld/mysqld.sock
@@ -152,13 +158,29 @@
     state: present
   when: not nextcloud.stat.exists
 
-- name: unpack nextcloud archive
+- name: download nextcloud archive
+  get_url:
+    url: "{{ nc_download }}"
+    dest: /tmp/nextcloud.tar.bz2
+    checksum: "{{ nc_checksum }}"
+  when: run_in_installer|default(false)|bool
+
+- name: unpack downloaded nextcloud archive
+  unarchive:
+    src: /tmp/nextcloud.tar.bz2
+    dest: "{{ www_root }}"
+    owner: www-data
+    group: www-data
+    remote_src: Yes
+  when: not nextcloud.stat.exists and run_in_installer|default(false)|bool
+
+- name: unpack provided nextcloud archive
   unarchive:
     src: nextcloud.tar.bz2
     dest: "{{ www_root }}"
     owner: www-data
     group: www-data
-  when: not nextcloud.stat.exists
+  when: not nextcloud.stat.exists and not run_in_installer|default(false)|bool
 
 - name: initialize nextcloud
   command:
@@ -232,6 +254,12 @@
     permanent: Yes
     immediate: Yes
     state: enabled
+  when: not run_in_installer|default(false)|bool
+
+- name: allow https in firewalld, offline
+  command: "firewall-offline-cmd --add-service=https"
+  when: run_in_installer|default(false)|bool
+
 
 
 ## ToDo kerberox integration:

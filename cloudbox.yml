@@ -12,6 +12,10 @@
     DNS: "192.168.2.1"
     ddns_domain: "something.ddnss.de"
     ddns_updkey: "138638.some.key.here.635620"
+    ## 'nc_download' and 'nc_checksum' are only
+    ## used for ansible-pull during installation:
+    nc_download: "https://download.nextcloud.com/server/releases/latest.tar.bz2"
+    nc_checksum: "sha256:194095a5586d84040bc455f77b8aa6c80f9a6a6dd713c9aebdad046713d4267b"
     nc_apps:
       - calendar
       - notes
