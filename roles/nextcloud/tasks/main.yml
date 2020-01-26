@@ -138,26 +138,6 @@
     group: www-data
 
 ## install nextcloud:
-- name: start mariadb during installation
-  command: /etc/init.d/mysql start
-  when: run_in_installer|default(false)|bool
-
-- name: create database with name 'nextcloud'
-  mysql_db:
-    login_unix_socket: /var/run/mysqld/mysqld.sock
-    name: nextcloud
-    state: present
-  when: not nextcloud.stat.exists
-
-- name: create database user 'nextcloud'
-  mysql_user:
-    login_unix_socket: /var/run/mysqld/mysqld.sock
-    name: nextcloud
-    password: "{{ db_nextcloud_pwd }}"
-    priv: 'nextcloud.*:ALL'
-    state: present
-  when: not nextcloud.stat.exists
-
 - name: download nextcloud archive
   get_url:
     url: "{{ nc_download }}"
@@ -181,6 +161,26 @@
     owner: www-data
     group: www-data
   when: not nextcloud.stat.exists and not run_in_installer|default(false)|bool
+
+- name: start mariadb during installation
+  command: /etc/init.d/mysql start
+  when: run_in_installer|default(false)|bool
+
+- name: create database with name 'nextcloud'
+  mysql_db:
+    login_unix_socket: /var/run/mysqld/mysqld.sock
+    name: nextcloud
+    state: present
+  when: not nextcloud.stat.exists
+
+- name: create database user 'nextcloud'
+  mysql_user:
+    login_unix_socket: /var/run/mysqld/mysqld.sock
+    name: nextcloud
+    password: "{{ db_nextcloud_pwd }}"
+    priv: 'nextcloud.*:ALL'
+    state: present
+  when: not nextcloud.stat.exists
 
 - name: initialize nextcloud
   command:
