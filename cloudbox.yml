@@ -15,7 +15,7 @@
     ## 'nc_download' and 'nc_checksum' are only
     ## used for ansible-pull during installation:
     nc_download: "https://download.nextcloud.com/server/releases/latest.tar.bz2"
-    nc_checksum: "sha256:194095a5586d84040bc455f77b8aa6c80f9a6a6dd713c9aebdad046713d4267b"
+    nc_checksum: "sha256:770faf34b8f0d81273623daed4d64ec7919c38dfeb07328b613058addbed19c0"
     nc_apps:
       - calendar
       - notes

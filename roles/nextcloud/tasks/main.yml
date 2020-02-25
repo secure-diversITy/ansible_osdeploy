@@ -257,8 +257,23 @@
   failed_when:  cmd_result.stdout is not search('already installed') and cmd_result.rc != 0
   when: allow_download
 
+
+- name: add default NIC to public zone
+  firewalld:
+    interface: "{{ ansible_default_ipv4.interface }}"
+    zone: public
+    permanent: Yes
+    immediate: Yes
+    state: enabled
+  when: not run_in_installer|default(false)|bool
+
+- name: add default NIC to public zone, offline
+  command: "firewall-offline-cmd --add-interface={{ ansible_default_ipv4.interface }} --zone=public"
+  when: run_in_installer|default(false)|bool
+
 - name: allow https in firewalld
   firewalld:
+    zone: public
     service: https
     permanent: Yes
     immediate: Yes
