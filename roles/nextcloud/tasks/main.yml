@@ -234,7 +234,7 @@
     warn: False
   register: cmd_result
   changed_when: cmd_result.stdout is not search('Nothing to do.')
-  when: allow_download
+  when: allow_download|bool
 
 ## app updates and installations:
 - name: update apps
@@ -244,7 +244,7 @@
     warn: False
   register: cmd_result
   changed_when: cmd_result.stdout | length > 0
-  when: allow_download
+  when: allow_download|bool
 
 - name: install extra apps
   command: "sudo -u www-data php ./occ app:install {{ item }}"
@@ -255,7 +255,16 @@
   register: cmd_result
   changed_when: cmd_result.stdout is not search('already installed')
   failed_when:  cmd_result.stdout is not search('already installed') and cmd_result.rc != 0
-  when: allow_download
+  when: allow_download|bool or run_in_installer|default(false)|bool
+
+## nextcloud maintenance
+- name: add missing indices
+  command: "sudo -u www-data php ./occ db:add-missing-indices"
+  args:
+    chdir: "{{ nc_dir }}"
+    warn: False
+  register: cmd_result
+  changed_when: cmd_result.stdout is search('table updated successfully')
 
 
 - name: add default NIC to public zone

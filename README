@@ -28,6 +28,7 @@ offers ansible playbooks and instructions for the following machines:
      - setup of a home cloud server
      - dynamic DNS name
      - nextcloud
+     - backup with borg
      - …
 
 Contributions like patches, suggestions, pull requests and/or further
