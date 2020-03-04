@@ -15,8 +15,8 @@ if grep -q "$MNT" /etc/fstab ; then
     [ -d "$BORG_REPO" ] || mount -v "$MNT" && MOUNTED="TRUE"
 fi
 
-if [ ! -d "$BORG_REPO" ] ; then
-    mkdir -vp --mode=0750 "$BORG_REPO"
+if [ ! -e "$KEY_BACKUP" ] ; then
+    [[ "$BORG_REPO" =~ @ ]] || mkdir -vp --mode=0750 "$BORG_REPO"
     borg init --encryption=repokey
     borg key export "$BORG_REPO" "$KEY_BACKUP"
 fi
