@@ -9,3 +9,7 @@ backup_dirs_extra: ""
 
 backup_opts: "--exclude-caches"
 backup_opts_extra: ""
+
+www_root: "/var/www"
+nc_dir: "{{ www_root }}/nextcloud"
+data_dir: "/var/nc-data"
