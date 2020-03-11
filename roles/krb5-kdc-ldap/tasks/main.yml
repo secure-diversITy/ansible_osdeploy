@@ -127,12 +127,12 @@
     state: exact
 
 - name: prepare password for kdc
-  shell: echo "cn=kdc,cn=kerberos,{{ basedn }}#{HEX}$(echo -n {{ kdc_service_pwd }} | xxd -g0 -ps | sed 's/0a$//')" > /etc/krb5kdc/service.keyfile
+  shell: echo "cn=kdc,cn=kerberos,{{ basedn }}#{HEX}$(echo -n {{ kdc_service_pwd }} | xxd -g0 -ps -c 256 | sed 's/0a$//')" > /etc/krb5kdc/service.keyfile
   no_log: true
   when: not krb5kdc.stat.exists
 
 - name: prepare password for kadmin
-  shell: echo "cn=kadmin,cn=kerberos,{{ basedn }}#{HEX}$(echo -n {{ kadmin_service_pwd }} | xxd -g0 -ps | sed 's/0a$//')" >> /etc/krb5kdc/service.keyfile
+  shell: echo "cn=kadmin,cn=kerberos,{{ basedn }}#{HEX}$(echo -n {{ kadmin_service_pwd }} | xxd -g0 -ps -c 256 | sed 's/0a$//')" >> /etc/krb5kdc/service.keyfile
   no_log: true
   when: not krb5kdc.stat.exists
 
