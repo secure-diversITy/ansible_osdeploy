@@ -146,3 +146,12 @@
     dest: "/etc/systemd/system/git-repo.service"
   notify: start git-repo
   when: not run_in_installer|default(false)|bool
+
+######################
+
+- name: add clients to inventory
+  blockinfile:
+    dest: /etc/ansible/hosts
+    block: |
+      [kerberox-client]
+      {{ in_inventory }}
