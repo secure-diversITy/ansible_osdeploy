@@ -88,4 +88,5 @@
     zone: internal
     service: nfs
     permanent: yes
+    immediate: yes
     state: enabled

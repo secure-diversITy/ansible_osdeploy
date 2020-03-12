@@ -210,6 +210,7 @@
     zone: internal
     service: "{{ item }}"
     permanent: yes
+    immediate: yes
     state: enabled
   with_items:
     - kerberos

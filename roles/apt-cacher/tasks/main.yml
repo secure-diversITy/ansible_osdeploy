@@ -28,6 +28,7 @@
     zone: internal
     port: 3142/tcp
     permanent: yes
+    immediate: yes
     state: enabled
 
 - meta: flush_handlers

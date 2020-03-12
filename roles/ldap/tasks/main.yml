@@ -155,4 +155,5 @@
     zone: internal
     service: ldap
     permanent: yes
+    immediate: yes
     state: enabled
