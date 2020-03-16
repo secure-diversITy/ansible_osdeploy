@@ -7,7 +7,7 @@
   copy:
     src: apt.conf
     dest: /etc/apt/apt.conf
-    backup: yes
+    force: no
   notify: "start apt-cacher-ng"
   when: not run_in_installer|default(false)|bool  ## do not enable apt-cacher during installation
 
