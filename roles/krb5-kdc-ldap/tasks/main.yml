@@ -173,6 +173,7 @@
   with_items:
     - host
     - ldap
+    - HTTP
   when: not krb5kdc.stat.exists
 
 - name: add principal to the keytab
@@ -180,6 +181,7 @@
   with_items:
     - host
     - ldap
+    - HTTP
   when: not krb5kdc.stat.exists
 
 - name: allow slapd to read the keytab
@@ -188,6 +190,7 @@
     owner: root
     group: openldap
     mode: '0640'
+  notify: restart slapd
 
 - name: "make 'kerberos' an alias hostname resolvable from the LAN"
   replace:
