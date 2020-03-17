@@ -30,5 +30,11 @@
     permanent: yes
     immediate: yes
     state: enabled
+  when: not run_in_installer|default(false)|bool
+
+- name: allow apt-cacher-ng service in firewalld, offline
+  command: "firewall-offline-cmd --zone=internal --add-port=3142/tcp"
+  when: run_in_installer|default(false)|bool
+
 
 - meta: flush_handlers
