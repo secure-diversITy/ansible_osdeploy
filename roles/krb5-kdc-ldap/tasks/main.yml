@@ -176,7 +176,7 @@
     - HTTP
   when: not krb5kdc.stat.exists
 
-- name: add principal to the keytab
+- name: add principal to the default keytab
   command: kadmin.local -q 'ktadd {{ item }}/{{ ansible_hostname }}.{{ ansible_domain }}'
   with_items:
     - host
