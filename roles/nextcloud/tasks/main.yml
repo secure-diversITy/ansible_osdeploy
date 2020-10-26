@@ -30,9 +30,11 @@
       - mariadb-server
       - python3-pymysql
       - php-apcu
+      - php-bcmath
       - php-fpm
       - php-curl
       - php-gd
+      - php-gmp
       - php-imagick
       - php-intl
       - php-json
@@ -246,6 +248,14 @@
 ## nextcloud maintenance
 - name: add missing indices
   command: "sudo -u www-data php ./occ db:add-missing-indices"
+  args:
+    chdir: "{{ nc_dir }}"
+    warn: False
+  register: cmd_result
+  changed_when: cmd_result.stdout is search('table updated successfully')
+
+- name: add missing columns
+  command: "sudo -u www-data php ./occ db:add-missing-columns"
   args:
     chdir: "{{ nc_dir }}"
     warn: False
