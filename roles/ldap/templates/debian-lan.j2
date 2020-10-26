@@ -8,7 +8,8 @@ set -eu
 usage(){
     cat <<EOF
 Usage:
-         $(basename $0)  adduser  <uid>  <password>  [<group>]  [<given name>]  [<family name>]
+         $(basename $0)  adduser  <uid>  <password>  <group>|none  <given name>  <family name>
+         $(basename $0)  adduser  <uid>  <password>  [<group>]
          $(basename $0)  deluser  <uid>
          $(basename $0)  delhost  <hostname>
          $(basename $0)  ldapvi
@@ -16,13 +17,13 @@ Usage:
 
      <uid>:  User ID (login name)
      <password>:  Password
-     <group>:  If given, the user is added to this posix group (in addition to his personal group).
-               The group must already exist in the LDAP DT.
+     <group>:  If given and not "none", the user is added to this posix group (in addition to his
+               personal group).  The group must already exist in the LDAP DT.
      <given name>, <family name>:  LDAP attributes 'givenName' and 'sn'.  If omitted, <uid> is used.
      <file>:  File containing lines of the form:
 
-                   adduser <uid 1>  <password 1>  [<group 1>]  [<given name 1>]  [<family name 1>]
-                   adduser <uid 2>  <password 2>  [<group 2>]  [<given name 2>]  [<family name 2>]
+                   adduser <uid 1>  <password 1>  <group 1>  <given name 1>  <family name 1>
+                   adduser <uid 2>  <password 2>  <group 2>  <given name 2>  <family name 2>
                    …
                    deluser <uid n>
                    deluser <uid n+1>
@@ -160,7 +161,7 @@ gidNumber: ${gidNumber}
 ##################################
 EOF
 
-    if [ -n "$grp" ] ; then
+    if [ -n "$grp" -a "$grp" != "none" ] ; then
         cat <<EOF | ldapmodify -H ldapi:/// -D "$LDAPADMIN"  -w "$ADPASSWD" | sed '/^$/d'
 ############## LDIF ##############
 dn: cn=${grp},ou=groups,$BASEDN
