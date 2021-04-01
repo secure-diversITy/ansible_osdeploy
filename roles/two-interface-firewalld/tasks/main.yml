@@ -2,7 +2,7 @@
   template:
     src: interfaces-static.j2
     dest: /etc/network/interfaces.d/static
-  notify: "restart networking"
+  notify: "bring up LAN interface"
 
 - name: install firewalld package
   apt: name=firewalld state=latest
