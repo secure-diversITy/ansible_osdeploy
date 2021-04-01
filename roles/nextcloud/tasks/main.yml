@@ -262,6 +262,15 @@
   register: cmd_result
   changed_when: cmd_result.stdout is search('table updated successfully')
 
+- name: convert filecache to bigint
+  command: "sudo -u www-data php ./occ -n db:convert-filecache-bigint"
+  args:
+    chdir: "{{ nc_dir }}"
+    warn: False
+  register: cmd_result
+  changed_when: cmd_result.stdout is not search('tables already up to date')
+
+
 
 - name: add default NIC to public zone
   firewalld:
