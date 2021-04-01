@@ -1,3 +1,8 @@
+- name: make sure ansible is available
+  apt:
+    name: ansible
+    state: latest
+
 - name: generate ssh key
   command: "su -l {{ ansible_user }} -c \"ssh-keygen -t rsa -f /home/{{ ansible_user }}/.ssh/id_rsa -P ''\""
   args:
