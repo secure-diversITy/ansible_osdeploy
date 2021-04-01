@@ -3,3 +3,4 @@
     name: sshd
     state: reloaded
   notify: "reload sshd"
+  when: not run_in_installer|default(false)|bool
