@@ -11,6 +11,7 @@
       - webext-ublock-origin
       - krb5-auth-dialog
     extra_pkgs_bpo: []  # [ libreoffice ]
+    ansible_python_interpreter: "/usr/bin/python3"
 
   vars_prompt:
     - name: "kadmin_pwd"
