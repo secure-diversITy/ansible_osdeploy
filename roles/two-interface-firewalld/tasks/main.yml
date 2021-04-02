@@ -19,6 +19,7 @@
     interface: "{{ if_wan }}"
     permanent: yes
     state: enabled
+    immediate: true
   when: not run_in_installer|default(false)|bool
 
 - name: enable masquerading
@@ -27,6 +28,7 @@
     masquerade: 'yes'
     permanent: yes
     state: enabled
+    immediate: true
   when: not run_in_installer|default(false)|bool
 
 - name: add LAN interface to zone intern
@@ -35,6 +37,7 @@
     interface: "{{ if_lan }}"
     permanent: yes
     state: enabled
+    immediate: true
   when: not run_in_installer|default(false)|bool
 
 - name: enable services
@@ -43,6 +46,7 @@
     service: "{{ item }}"
     permanent: yes
     state: enabled
+    immediate: true
   with_items:
     - dhcp
     - dns
