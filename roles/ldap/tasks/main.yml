@@ -1,117 +1,18 @@
-## Install and configure slapd (if not done yet),
-##  run most tasks only on slapd installation.
+## Install and configure slapd.
 ---
 - fail: msg="The machine's domain must not be empty."
   when: ansible_domain | length == 0
 
-- name: check if slapd is already there
-  stat: path=/etc/ldap/slapd.d/slapd-config.ldif
+- name: check if slapd is already set up
+  stat: path=/usr/sbin/slapd
   register: slapd
 
-- name: preseed ldap domain
-  debconf:
-    name: slapd
-    question:  slapd/domain
-    value: "{{ ansible_domain }}"
-    vtype: string
-  when: not slapd.stat.exists
-
-- name: preseed slapd admin password1
-  debconf:
-    name: slapd
-    question: slapd/password1
-    value: "{{ ldap_admin_pwd }}"
-    vtype: password
-  no_log: true
-  when: not slapd.stat.exists
-
-- name: preseed slapd admin password2
-  debconf:
-    name: slapd
-    question: slapd/password2
-    value: "{{ ldap_admin_pwd }}"
-    vtype: password
-  no_log: true
-  when: not slapd.stat.exists
-
-- name: dump admin password
-  shell: echo -n "{{ ldap_admin_pwd }}" > "{{ ldap_admin_pwd_file }}" ; chmod 0600 "{{ ldap_admin_pwd_file }}"
-  no_log: true
-  when: not slapd.stat.exists
-
-- name: install packages for LDAP
-  apt:
-    name:
-      - slapd
-      - ldap-utils
-      - ldapvi
-      - python3-ldap
-      - ssl-cert
-    state: latest
-
-- name: add openldap to the ssl-cert group
-  user:
-    name: openldap
-    groups: ssl-cert
-    append: yes
-  register: ssl_cert_group
-
-- name: restart slapd
-  systemd: name=slapd state=restarted
-  when: ssl_cert_group.changed
-
-- name: make initial slapd configuration available
-  copy:
-    src: slapd-config.ldif
-    dest: /etc/ldap/slapd.d/
-  when: not slapd.stat.exists
-
-- name: make slapd TLS configuration available
-  template:
-    src: slapd-TLS.ldif
-    dest: /etc/ldap/slapd.d/
-  when: not slapd.stat.exists
-
-- name: activate ppolicy schema
-  command: ldapadd -Y EXTERNAL -H ldapi:/// -f /etc/ldap/schema/ppolicy.ldif
-  when: not slapd.stat.exists
-
-- name: initialize slapd if it has just been installed
-  command: ldapadd -Y EXTERNAL -H ldapi:/// -f /etc/ldap/slapd.d/slapd-config.ldif
-  when: not slapd.stat.exists
-
-- name: configure LDAP TLS
-  command: ldapmodify -Y EXTERNAL -H ldapi:/// -f /etc/ldap/slapd.d/slapd-TLS.ldif
-  when: not slapd.stat.exists
-
-- name: "make 'ldap' an alias hostname resolvable from the LAN"
-  replace:
-    path: /etc/hosts
-    regexp: "^({{ ipaddr_lan | ipaddr('address') }}\\s.+)$"
-    replace: '\1	ldap'
-  when: not slapd.stat.exists
-
-- name: add URI to ldap.conf
-  lineinfile:
-    dest: /etc/ldap/ldap.conf
-    line: "URI ldapi:///"
-    insertafter: "#URI.*"
-
-- name: add BASE to ldap.conf
-  lineinfile:
-    dest: /etc/ldap/ldap.conf
-    line: "BASE {{ basedn }}"
-    insertafter: "#BASE.*"
-
-- name: check against self signed certificate
-  replace:
-    path: /etc/ldap/ldap.conf
-    regexp: "^(TLS_CACERT\\s+/etc/ssl/certs/ca-certificates.crt)$"
-    replace: '#\1\nTLS_CACERT\t{{ TLSCertificateFile }}'
+- name: install and configure slapd
+  include_tasks: setup.yml
   when: not slapd.stat.exists
 
 #######################################################################################
-## Use the admin password saved to file from now on (available also after installation):
+## Use the admin password saved to file (available also after installation):
 - name: slurp admin password
   slurp:
     src: "{{ ldap_admin_pwd_file }}"
@@ -133,6 +34,7 @@
     bind_dn: "cn=admin,{{ basedn }}"
     bind_pw: "{{ ldap_admin_pwd['content'] | b64decode | replace('\n', '') }}"
 
+
 - name: add group for ldap users
   ldap_entry:
     dn: "cn=ldapuser,ou=groups,{{ basedn }}"
@@ -143,13 +45,14 @@
     bind_dn: "cn=admin,{{ basedn }}"
     bind_pw: "{{ ldap_admin_pwd['content'] | b64decode | replace('\n', '') }}"
 
+
 - name: provide simple script to manage ldap/kdc
   template:
     src: debian-lan.j2
     dest: /usr/local/sbin/debian-lan
     mode: 0744
 
-## Add user
+
 - name: add dummy user foo
   ldap_entry:
     dn: "uid=foo,ou=people,{{ basedn }}"
@@ -178,6 +81,7 @@
     bind_dn: "cn=admin,{{ basedn }}"
     bind_pw: "{{ ldap_admin_pwd['content'] | b64decode | replace('\n', '') }}"
   when: foo_pwd is defined and foo_pwd | length > 0
+
 
 - name: allow ldap service in firewalld
   firewalld:

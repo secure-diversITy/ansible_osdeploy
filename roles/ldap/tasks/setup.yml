@@ -1,0 +1,94 @@
+## Install and configure slapd.
+---
+- name: preseed ldap domain
+  debconf:
+    name: slapd
+    question:  slapd/domain
+    value: "{{ ansible_domain }}"
+    vtype: string
+
+- name: preseed slapd admin password1
+  debconf:
+    name: slapd
+    question: slapd/password1
+    value: "{{ ldap_admin_pwd }}"
+    vtype: password
+  no_log: true
+
+- name: preseed slapd admin password2
+  debconf:
+    name: slapd
+    question: slapd/password2
+    value: "{{ ldap_admin_pwd }}"
+    vtype: password
+  no_log: true
+
+- name: dump admin password
+  shell: echo -n "{{ ldap_admin_pwd }}" > "{{ ldap_admin_pwd_file }}" ; chmod 0600 "{{ ldap_admin_pwd_file }}"
+  no_log: true
+
+- name: install packages for LDAP
+  apt:
+    name:
+      - slapd
+      - ldap-utils
+      - ldapvi
+      - python3-ldap
+      - ssl-cert
+    state: latest
+
+- name: add openldap to the ssl-cert group
+  user:
+    name: openldap
+    groups: ssl-cert
+    append: yes
+  register: ssl_cert_group
+
+- name: restart slapd
+  systemd: name=slapd state=restarted
+  when: ssl_cert_group.changed
+
+- name: make initial slapd configuration available
+  copy:
+    src: slapd-config.ldif
+    dest: /etc/ldap/slapd.d/
+
+- name: make slapd TLS configuration available
+  template:
+    src: slapd-TLS.ldif
+    dest: /etc/ldap/slapd.d/
+
+- name: activate ppolicy schema
+  command: ldapadd -Y EXTERNAL -H ldapi:/// -f /etc/ldap/schema/ppolicy.ldif
+
+- name: initialize slapd if it has just been installed
+  command: ldapadd -Y EXTERNAL -H ldapi:/// -f /etc/ldap/slapd.d/slapd-config.ldif
+
+- name: configure LDAP TLS
+  command: ldapmodify -Y EXTERNAL -H ldapi:/// -f /etc/ldap/slapd.d/slapd-TLS.ldif
+
+- name: "make 'ldap' an alias hostname resolvable from the LAN"
+  replace:
+    path: /etc/hosts
+    regexp: "^({{ ipaddr_lan | ipaddr('address') }}\\s.+)$"
+    replace: '\1	ldap'
+
+- name: add URI to ldap.conf
+  lineinfile:
+    dest: /etc/ldap/ldap.conf
+    line: "URI ldapi:///"
+    insertafter: "#URI.*"
+
+- name: add BASE to ldap.conf
+  lineinfile:
+    dest: /etc/ldap/ldap.conf
+    line: "BASE {{ basedn }}"
+    insertafter: "#BASE.*"
+
+- name: check against self signed certificate
+  replace:
+    path: /etc/ldap/ldap.conf
+    regexp: "^(TLS_CACERT\\s+/etc/ssl/certs/ca-certificates.crt)$"
+    replace: '#\1\nTLS_CACERT\t{{ TLSCertificateFile }}'
+
+## Use 'sudo ldapvi -Y EXTERNAL -h ldapi:/// -b "cn=config"' to modify certificate and key.
