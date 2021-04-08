@@ -91,4 +91,8 @@
     regexp: "^(TLS_CACERT\\s+/etc/ssl/certs/ca-certificates.crt)$"
     replace: '#\1\nTLS_CACERT\t{{ TLSCertificateFile }}'
 
+- name: enable pam-mkhomedir
+  command: pam-auth-update --enable mkhomedir
+  when: foo_pwd is defined and foo_pwd | length > 0
+
 ## Use 'sudo ldapvi -Y EXTERNAL -h ldapi:/// -b "cn=config"' to modify certificate and key.

@@ -93,6 +93,6 @@
 - name: automount
   lineinfile:
     dest: /etc/fstab
-    line: "{{ nfs_server}}:/home  {{ lan_homes }}  nfs4  sec=krb5p,_netdev,noauto,x-systemd.automount,x-systemd.idle-timeout=60  0  0"
+    line: "{{ nfs_server }}:/home  {{ lan_homes }}  nfs4  sec=krb5p,_netdev,noauto,x-systemd.automount,x-systemd.idle-timeout=60  0  0"
   notify: reload systemd
   when: not run_in_installer|default(false)|bool
