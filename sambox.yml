@@ -53,3 +53,4 @@
     - tftp-netboot-installer
     - apt-cacher
     - samba-ldap
+    - prepare4clients

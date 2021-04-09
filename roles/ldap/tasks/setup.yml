@@ -67,12 +67,6 @@
 - name: configure LDAP TLS
   command: ldapmodify -Y EXTERNAL -H ldapi:/// -f /etc/ldap/slapd.d/slapd-TLS.ldif
 
-- name: "make 'ldap' an alias hostname resolvable from the LAN"
-  replace:
-    path: /etc/hosts
-    regexp: "^({{ ipaddr_lan | ipaddr('address') }}\\s.+)$"
-    replace: '\1	ldap'
-
 - name: add URI to ldap.conf
   lineinfile:
     dest: /etc/ldap/ldap.conf

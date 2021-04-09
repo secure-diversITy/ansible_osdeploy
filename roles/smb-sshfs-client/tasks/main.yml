@@ -1,0 +1,58 @@
+---
+- fail: msg="The machine's domain must not be empty."
+  when: ansible_domain | length == 0
+
+- name: install needed packages
+  apt:
+    name:
+      - sssd-ldap
+      - libpam-mount  
+      - cifs-utils
+      - sshfs  
+    state: latest
+
+- name: add URI to ldap.conf
+  lineinfile:
+    dest: /etc/ldap/ldap.conf
+    line: "URI ldap://ldap/"
+    insertafter: "#URI.*"
+
+- name: add BASE to ldap.conf
+  lineinfile:
+    dest: /etc/ldap/ldap.conf
+    line: "BASE {{ basedn }}"
+    insertafter: "#BASE.*"
+
+- name: enable pam_umask
+  lineinfile:
+    dest: /etc/pam.d/common-session
+    line: "session optional	pam_umask.so usergroups"
+
+- name: provide identities from directory
+  template:
+    src: sssd.conf.j2
+    dest: /etc/sssd/sssd.conf
+    mode: 0600
+  notify: restart sssd
+
+- name: configure pam_mount
+  blockinfile:
+    dest: /etc/security/pam_mount.conf.xml
+    block: |
+      <!-- volume
+        fstype="cifs"
+        server="{{ home_server }}"
+        path="%(USER)"
+        mountpoint="/home/lan/%(USER)"
+        options="dir_mode=0750,file_mode=0640"
+      ><not><or><user>root</user><user>ansible</user><user>Debian-gdm</user></or></not></volume -->
+      <volume
+        fstype="fuse"
+        path="sshfs#%(USER)@{{ home_server }}:"
+        mountpoint="/home/lan/%(USER)"
+        options="allow_other,default_permissions,reconnect,password_stdin"
+        ssh="0" noroot="0"
+      ><not><or><user>root</user><user>ansible</user><user>Debian-gdm</user></or></not></volume>
+    insertafter: "<!-- Volume definitions -->"
+
+
