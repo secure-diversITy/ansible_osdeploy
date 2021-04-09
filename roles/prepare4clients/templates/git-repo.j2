@@ -7,12 +7,10 @@ ExecStart=/usr/bin/git daemon --reuseaddr --export-all --base-path={{ repo_dir }
 Restart=always
 RestartSec=500ms
 
-StandardOutput=syslog
-StandardError=syslog
 SyslogIdentifier=git-daemon
 
-User=nobody
-Group=nogroup
+User=git
+Group=git
 
 [Install]
 WantedBy=multi-user.target
