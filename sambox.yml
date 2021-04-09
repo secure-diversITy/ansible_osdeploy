@@ -18,8 +18,9 @@
 
     ## LAN IP address range:
     ipaddr_lan: 192.168.0.10/24
-    dhcp_range: 192.168.0.50,192.168.0.99,2h
-    in_inventory: 192.168.0.[50:99]
+    dhcp_start: 192.168.0.50
+    dhcp_stop:  192.168.0.150
+    in_inventory: 192.168.0.[50:150]
 
     di_dist: "{{ ansible_distribution_release }}"
     di_version: 10  #"{{ ansible_distribution_major_version }}"
@@ -49,8 +50,8 @@
   roles:
     - up2date-debian
     - two-interface-firewalld
-    - dhcp-dns-dnsmasq
-    - tftp-netboot-installer
+    - netboot-installer
+    - dns-dhcp-tftp
     - apt-cacher
     - samba-ldap
     - prepare4clients

@@ -47,8 +47,8 @@
   roles:
     - up2date-debian
     - two-interface-firewalld
-    - dhcp-dns-dnsmasq
-    - tftp-netboot-installer
+    - netboot-installer
+    - dnsmasq
     - apt-cacher
     - { role: krb5-kdc-ldap, when: not run_in_installer|default(false)|bool }
     - { role: nfs-server, when: not run_in_installer|default(false)|bool }

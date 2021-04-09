@@ -9,8 +9,14 @@
       - resolvconf
     state: latest
 
-- name: configure dnsmasq
+- name: configure dnsmasq dhcp
   template:
     src: dnsmasq-dhcp.j2
     dest: /etc/dnsmasq.d/dnsmasq-dhcp
+  notify: "restart dnsmasq"
+
+- name: configure dnsmasq tftp
+  template:
+    src: dnsmasq-tftp-netboot-installer.j2
+    dest: /etc/dnsmasq.d/tftp-netboot-installer
   notify: "restart dnsmasq"

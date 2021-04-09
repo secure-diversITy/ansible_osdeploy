@@ -17,14 +17,7 @@
     src: /usr/share/doc/di-netboot-assistant/examples/preseed.cfg
     dest: "{{ tftp_root }}/d-i/{{ di_dist }}"
     force: no
-
-- name: configure dnsmasq
-  template:
-    src: dnsmasq-tftp-netboot-installer.j2
-    dest: /etc/dnsmasq.d/tftp-netboot-installer
-  notify:
-    - restart dnsmasq
-    - rebuild di-netboot-assistant menu
+    remote_src: yes
 
 - name: make the hostname resolvable from the LAN
   replace:
