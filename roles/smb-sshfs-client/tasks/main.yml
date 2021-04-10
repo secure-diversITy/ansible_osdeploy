@@ -52,4 +52,13 @@
       ><not><or><user>root</user><user>ansible</user><user>Debian-gdm</user></or></not></volume>
     insertafter: "<!-- Volume definitions -->"
 
+- name: make sure .ssh exists
+  file:
+    path: /root/.ssh
+    state: directory
+    mode: '0700'
 
+- name: fetch homes server host key for sshfs
+  shell:
+    cmd: ssh-keyscan -H {{ home_server }} >> /root/.ssh/known_hosts
+    creates: /root/.ssh/known_hosts
