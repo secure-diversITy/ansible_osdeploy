@@ -8,9 +8,7 @@ Restart=always
 RestartSec=500ms
 
 SyslogIdentifier=git-daemon
-
-User=git
-Group=git
+DynamicUser=yes
 
 [Install]
 WantedBy=multi-user.target
