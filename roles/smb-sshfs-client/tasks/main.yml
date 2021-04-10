@@ -62,3 +62,7 @@
   shell:
     cmd: ssh-keyscan -H {{ home_server }} >> /root/.ssh/known_hosts
     creates: /root/.ssh/known_hosts
+
+## gnome-keyring fails with sshfs:
+- name: disable gnome-keyring-daemon
+  command: dpkg-divert --divert /usr/bin/gnome-keyring-daemon.distrib --rename /usr/bin/gnome-keyring-daemon
