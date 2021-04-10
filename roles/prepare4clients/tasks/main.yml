@@ -161,8 +161,14 @@
     block: |
       menuentry 'Debian {{ di_version }} (amd64) + preseed + sambox-client.yml' {
          regexp --set=1:oct4 --set=2:oct5 --set=3:oct6 "\:([[:xdigit:]]+)\:([[:xdigit:]]+)\:([[:xdigit:]]+)\$" $net_default_mac
-         linux   /d-i/n-pkg/images/{{ di_version }}/amd64/text/debian-installer/amd64/linux auto=true priority=critical hostname=${oct4}${oct5}${oct6} domain={{ ansible_domain }} url=tftp://{{ ansible_hostname }} playbook=sambox-client.yml ---
+         linux   /d-i/n-pkg/images/{{ di_version }}/amd64/text/debian-installer/amd64/linux auto=true priority=critical hostname=${oct4}${oct5}${oct6} url=tftp://{{ ansible_hostname }} playbook=sambox-client.yml ---
          initrd  /d-i/n-pkg/images/{{ di_version }}/amd64/text/debian-installer/amd64/initrd.gz
+      }
+
+      menuentry 'Debian daily (amd64) + preseed + sambox-client.yml' {
+         regexp --set=1:oct4 --set=2:oct5 --set=3:oct6 "\:([[:xdigit:]]+)\:([[:xdigit:]]+)\:([[:xdigit:]]+)\$" $net_default_mac
+         linux   /d-i/n-a/daily/amd64/linux auto=true priority=critical hostname=${oct4}${oct5}${oct6} url=tftp://{{ ansible_hostname }} playbook=sambox-client.yml ---
+         initrd  /d-i/n-a/daily/amd64/initrd.gz
       }
     marker: "# {mark} ANSIBLE MANAGED BLOCK sambox-client"
   notify: "rebuild di-netboot-assistant menu"
