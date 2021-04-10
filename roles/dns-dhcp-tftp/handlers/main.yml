@@ -9,3 +9,7 @@
 - name: restart tftpd-hpa
   systemd: name=tftpd-hpa state=restarted enabled=yes
   listen: restart tftpd-hpa
+
+- name: restart dhcp-client
+  systemd: name=ifup@{{ if_wan }} state=restarted enabled=yes
+  listen: restart dhcp-client

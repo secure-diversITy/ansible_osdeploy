@@ -66,6 +66,7 @@
   template:
     src: resolv.conf.j2
     dest: /etc/resolv.conf
+  notify: restart isc-dhcp-server
 
 ## stop dhclient from overwriting /etc/resolv.conf:
 - name: supersede dhcp client data
@@ -75,6 +76,7 @@
       supersede domain-search "{{ ansible_domain }}";
       supersede domain-name-servers 127.0.0.1;
     insertbefore: "#send dhcp-client-identifier.*" 
+  notify: restart dhcp-client
 
 - name: generate rndc key
   command:
