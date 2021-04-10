@@ -1,7 +1,4 @@
 ---
-- fail: msg="The machine's domain must not be empty."
-  when: ansible_domain | length == 0
-
 - name: install needed packages
   apt:
     name:
