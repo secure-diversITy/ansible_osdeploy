@@ -15,17 +15,19 @@ max-lease-time 7200;
 # behavior of the version 2 packages ('none', since DHCP v2 didn't
 # have support for DDNS.)
 #ddns-update-style none;
-use-host-decl-names   on;
+
+use-host-decl-names on;
+ddns-update-style standard;
 
 include "/etc/dhcp/rndc.key";
 
 zone intern. {
-  primary dns;
+  primary 127.0.0.1;
   key rndc-key;
 }
 
 zone 0.168.192.in-addr.arpa. {
-  primary dns;
+  primary 127.0.0.1;
   key rndc-key;
 }
 

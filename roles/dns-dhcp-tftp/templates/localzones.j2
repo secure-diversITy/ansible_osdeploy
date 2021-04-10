@@ -1,8 +1,11 @@
+include "/etc/bind/rndc.key";
+
 zone "0.168.192.in-addr.arpa" {
         type master;
         notify no;
         file "/etc/bind/db.192.168.0";
         journal "/var/lib/bind/db.192.168.0.jnl";
+        allow-update { key rndc-key; };
 };
 
 zone "intern" {
@@ -10,4 +13,5 @@ zone "intern" {
         notify no;
         file "/etc/bind/db.intern";
         journal "/var/lib/bind/db.intern.jnl";
+        allow-update { key rndc-key; };
 };

@@ -46,6 +46,16 @@
     - localzones
   notify: restart bind
 
+- name: link zone files to writeable directory for DDNS
+  file:
+    src: "/etc/bind/{{ item }}"
+    dest: "/var/lib/bind/{{ item }}"
+    state: link
+  loop:
+    - db.intern
+    - db.192.168.0
+  notify: restart bind
+
 - name: enable local bind config
   lineinfile:
     path: /etc/bind/named.conf.local
@@ -62,7 +72,6 @@
   blockinfile:
     dest: /etc/dhcp/dhclient.conf
     block: |
-      supersede domain-name "{{ ansible_domain }}";
       supersede domain-search "{{ ansible_domain }}";
       supersede domain-name-servers 127.0.0.1;
     insertbefore: "#send dhcp-client-identifier.*" 
