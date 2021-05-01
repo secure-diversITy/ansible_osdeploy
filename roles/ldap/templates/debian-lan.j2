@@ -8,12 +8,12 @@ set -eu
 usage(){
     cat <<EOF
 Usage:
-         $(basename $0)  adduser  <uid>  <password>  <group>|none  <given name>  <family name>
-         $(basename $0)  adduser  <uid>  <password>  [<group>]
-         $(basename $0)  deluser  <uid>
-         $(basename $0)  delhost  <hostname>
-         $(basename $0)  ldapvi
-         $(basename $0)  <file>
+         $(basename "$0")  adduser  <uid>  <password>  <group>|none  <given name>  <family name>
+         $(basename "$0")  adduser  <uid>  <password>  [<group>]
+         $(basename "$0")  deluser  <uid>
+         $(basename "$0")  delhost  <hostname>
+         $(basename "$0")  ldapvi
+         $(basename "$0")  <file>
 
      <uid>:  User ID (login name)
      <password>:  Password
@@ -28,7 +28,7 @@ Usage:
                    deluser <uid n>
                    deluser <uid n+1>
                    …
-                           Every line is processed like a single call to the $(basename $0) program.
+			   Every line is processed like a single call to the $(basename "$0") program.
 EOF
 }
 
@@ -48,13 +48,13 @@ if [ $# -lt 2 ] ; then
             $0 $LINE
         done < "$1"
         ## reset cache after mass import/deletion:
-        sss_cache -U -G
+        which sss_cache > /dev/null && sss_cache -U -G
         exit 0
     else
         usage
         exit 1
     fi
-elif [ $1 = adduser -a $# -lt 3 ] ; then
+elif [ "$1" = adduser ] && [ $# -lt 3 ] ; then
     echo "Error: Password missing."
     usage
     exit 1
@@ -93,11 +93,11 @@ nextnum(){
     local bsta bend all uids gids num
 
     ## Search for the next pair of identical free IDs:
-    while [ $id -le $MAXID ] ; do
+    while [ "$id" -le "$MAXID" ] ; do
         bsta=$id
-        bend=$(( $bsta + $RANGE ))
+        bend=$(( bsta + RANGE ))
 
-        all="$(seq $bsta $bend)"
+        all="$(seq "$bsta" "$bend")"
         uids="$(ldapsearch -Y EXTERNAL -H ldapi:/// -LLL -b "ou=people,$BASEDN" "(&(objectClass=posixAccount)(uidNumber>=$bsta)(uidNumber<=$bend))" \
                          uidNumber 2>/dev/null | grep "uidNumber: " | cut -f2 -d ' ' | sort -g | uniq)"
         gids="$(ldapsearch -Y EXTERNAL -H ldapi:/// -LLL -b "ou=groups,$BASEDN" "(&(objectClass=posixGroup)(gidNumber>=$bsta)(uidNumber<=$bend))" \
@@ -108,10 +108,10 @@ nextnum(){
         num=$(comm -12 <(echo "$fuids") <(echo "$fgids") | head -1)
 
         if [ -n "$num" ] ; then
-            echo $num
+            echo "$num"
             return
         else
-            id=$(( $bend + 1 ))
+            id=$(( bend + 1 ))
         fi
     done
     ## something went wrong:
@@ -125,6 +125,8 @@ add-user(){
     local grp="$3"
     local gn="$4"
     local sn="$5"
+    local uidNumber
+    local gidNumber
 
     if ldapsearch -Y EXTERNAL -H ldapi:/// -LLL -b "ou=people,$BASEDN" "(&(objectClass=posixAccount)(uid=$id))" uid 2>/dev/null \
             | grep -q "uid: $id" ; then
@@ -132,10 +134,10 @@ add-user(){
         return
     fi
 
-    local uidNumber=$(nextnum)
-    local gidNumber=$uidNumber
+    uidNumber=$(nextnum)
+    gidNumber=$uidNumber
 
-    if [ $uidNumber -ge $MAXID -o $gidNumber -ge $MAXID ] ; then
+    if [ "$uidNumber" -ge "$MAXID" ] || [ "$gidNumber" -ge "$MAXID" ] ; then
         echo "Error: $uidNumber and/or $gidNumber exceed max ID number ${MAXID}."
         exit 1
     fi
@@ -161,7 +163,7 @@ gidNumber: ${gidNumber}
 ##################################
 EOF
 
-    if [ -n "$grp" -a "$grp" != "none" ] ; then
+    if [ -n "$grp" ] && [ "$grp" != "none" ] ; then
         cat <<EOF | ldapmodify -H ldapi:/// -D "$LDAPADMIN"  -w "$ADPASSWD" | sed '/^$/d'
 ############## LDIF ##############
 dn: cn=${grp},ou=groups,$BASEDN
@@ -171,16 +173,16 @@ memberUid: ${id}
 EOF
     fi
 
-    if [ $KRB5 ] ; then
+    if [ "$KRB5" = "true" ] ; then
         kadmin.local -q "add_principal -policy default -pw \"$pw\" -x dn=\"uid=${id},ou=people,$BASEDN\" ${id}" \
             | sed '/Authenticating as principal/d'
         if [ ! -e "${HOMES}/${id:0:1}/${id}" ] ; then
             echo "uidNumber: ${uidNumber}  gidNumber: ${gidNumber}"
-            mkdir -p ${HOMES}/${id:0:1}/
-            cp -r /etc/skel ${HOMES}/${id:0:1}/${id}
-            chown -R ${uidNumber}:${gidNumber} ${HOMES}/${id:0:1}/${id}
+            mkdir -p "${HOMES}/${id:0:1}/"
+            cp -r /etc/skel "${HOMES}/${id:0:1}/${id}"
+            chown -R "${uidNumber}:${gidNumber}" "${HOMES}/${id:0:1}/${id}"
             #chmod -R o= ${HOMES}/${id:0:1}/${id}
-            ls -nld ${HOMES}/${id:0:1}/${id}
+            ls -nld "${HOMES}/${id:0:1}/${id}"
         fi
     fi
 }
@@ -209,9 +211,9 @@ memberUid: ${id}
 EOF
     done
 
-    if [ -d ${HOMES}/${id:0:1}/${id} ] ; then
+    if [ -d "${HOMES}/${id:0:1}/${id}" ] ; then
         KEEPDIR="${HOMES}/${id:0:1}/rm_$(date '+%Y%m%d')_${id}"
-        mv ${HOMES}/${id:0:1}/${id} "${KEEPDIR}"
+        mv "${HOMES}/${id:0:1}/${id}" "${KEEPDIR}"
         chown -R root:root  "${KEEPDIR}"
         ls -ld "$KEEPDIR"
     fi
@@ -233,8 +235,8 @@ del-host(){
 ########### main #############
 ##############################
 
-sss_cache -U -G  ## clear cache
-echo "==== $@ ===="
+which sss_cache > /dev/null && sss_cache -U -G  ## clear cache
+echo "==== $* ===="
 case $COMMAND in
     adduser)
         add-user "${id}" "${pwEntry}" "${grp}" "${gn}" "${sn}"
