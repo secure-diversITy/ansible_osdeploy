@@ -42,7 +42,7 @@
     dest: "/etc/bind/{{ item }}"
   loop:
     - db.intern
-    - db.192.168.0
+    - db.lan
     - localzones
   notify: restart bind
 
@@ -53,7 +53,7 @@
     state: link
   loop:
     - db.intern
-    - db.192.168.0
+    - db.lan
   notify: restart bind
 
 - name: enable local bind config

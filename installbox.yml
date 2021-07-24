@@ -17,6 +17,8 @@
 
     ## LAN IP address range:
     ipaddr_lan: 192.168.0.10/24
+    ipaddr_lan_threeoct: {{ ipaddr_lan.split('.')[0:3] | join('.')}}
+    ipaddr_lan_ptr:  {{ ipaddr_lan | ansible.netcommon.ipaddr('revdns').split('.')[1:-1] | join('.') }}
     dhcp_range: 192.168.0.50,192.168.0.99,2h
 
     di_dist: "{{ ansible_distribution_release }}"
