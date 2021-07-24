@@ -38,7 +38,7 @@
   roles:
     - up2date-debian
     - two-interface-firewalld
-    - dhcp-dns-dnsmasq
-    - tftp-netboot-installer
+    - dnsmasq
+    - netboot-installer
     - apt-cacher
     - prepare4clients
