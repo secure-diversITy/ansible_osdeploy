@@ -197,6 +197,7 @@
 - name: add clients to inventory
   blockinfile:
     dest: /etc/ansible/hosts
+    create: yes
     block: |
       [kerberox-client]
       {{ in_inventory }}
