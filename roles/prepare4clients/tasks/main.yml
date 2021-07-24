@@ -182,7 +182,7 @@
     repo: 'https://salsa.debian.org/andi/debian-lan-ansible.git'
     dest: "{{ repo_dir }}"
     update: no
-  become_user: "ansible"
+  become_user: "{{ ansible_user }}"
   when: not run_in_installer|default(false)|bool
 
 - name: start git-repo
