@@ -42,8 +42,13 @@
     dest: "/etc/bind/{{ item }}"
   loop:
     - db.intern
-    - db.lan
     - localzones
+  notify: restart bind
+
+- name: deploy config files for bind9 - special case where template destination filename is dynamic
+  template:
+    src: db.lan.j2
+    dest: "/etc/bind/db.{{ ipaddr_lan_threeoct }}"
   notify: restart bind
 
 - name: link zone files to writeable directory for DDNS
@@ -53,7 +58,7 @@
     state: link
   loop:
     - db.intern
-    - db.lan
+    - "db.{{ ipaddr_lan_threeoct }}"
   notify: restart bind
 
 - name: enable local bind config

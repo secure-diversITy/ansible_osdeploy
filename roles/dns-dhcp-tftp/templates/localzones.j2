@@ -1,6 +1,6 @@
 include "/etc/bind/rndc.key";
 
-zone "{{ ipaddr_lan_ptr }}" {
+zone "{{ ipaddr_lan_ptr[:-1] }}" {
         type master;
         notify no;
         file "/etc/bind/db.{{ ipaddr_lan_threeoct }}";

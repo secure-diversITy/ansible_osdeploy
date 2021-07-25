@@ -26,7 +26,7 @@ zone intern. {
   key rndc-key;
 }
 
-zone "{{ ipaddr_lan_ptr }}" {
+zone {{ ipaddr_lan_ptr }} {
   primary 127.0.0.1;
   key rndc-key;
 }
@@ -50,7 +50,7 @@ if option arch = 00:07 {
       filename "d-i/n-a/pxelinux.0";
 }
 
-subnet {{ ipaddr_lan | ipaddr("address") }} netmask {{ ipaddr_lan | ipaddr("netmask") }} {
+subnet {{ ipaddr_lan | ipaddr("network") }} netmask {{ ipaddr_lan | ipaddr("netmask") }} {
       option routers {{ ipaddr_lan | ipaddr("address") }};
       range {{ dhcp_start }} {{ dhcp_stop }};
 }
