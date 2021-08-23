@@ -36,6 +36,7 @@
       - php-gd
       - php-gmp
       - php-imagick
+      - libmagickcore-6.q16-6-extra
       - php-intl
       - php-json
       - php-ldap
@@ -84,10 +85,10 @@
     regexp: "{{ item.regex }}"
     replace: "{{ item.replace }}"
   with_items:
-    - { regex: "^pm.max_children = .*$", replace: "pm.max_children = 120" }
-    - { regex: "^pm.start_servers = .*$", replace: "pm.start_servers = 12" }
-    - { regex: "^pm.min_spare_servers = .*$", replace: "pm.min_spare_servers = 6" }
-    - { regex: "^pm.max_spare_servers = .*$", replace: "pm.max_spare_servers = 18" }
+    - { regex: "^pm.max_children = .*$", replace: "pm.max_children = 10" }
+    - { regex: "^pm.start_servers = .*$", replace: "pm.start_servers = 4" }
+    - { regex: "^pm.min_spare_servers = .*$", replace: "pm.min_spare_servers = 2" }
+    - { regex: "^pm.max_spare_servers = .*$", replace: "pm.max_spare_servers = 6" }
   notify: "restart php-fpm"
 
 - name: increase php memory limit
@@ -198,12 +199,21 @@
     warn: False
   when: not nextcloud.stat.exists
 
+- name: enable acpu for nextcloud updates
+  lineinfile:
+    path: /etc/php/{{ php_ver.stdout }}/mods-available/apcu.ini
+    line: "apc.enable_cli=1"
+
 - name: allow access from LAN
-  command: sudo -u www-data php ./occ config:system:set trusted_domains 1 --value='192.168.*.*'
+  command: sudo -u www-data php ./occ config:system:set trusted_domains {{ item[0] }} --value='{{ item[1] }}'
   args:
     chdir: "{{ nc_dir }}"
     warn: False
   when: not nextcloud.stat.exists
+  loop:
+    - [1, '192.168.*.*']
+    - [2, '10.*.*.*']
+    - [3, '172.16.*.*']
 
 ## nextcloudcron
 - name: provide nextcloudcron.service and .timer
