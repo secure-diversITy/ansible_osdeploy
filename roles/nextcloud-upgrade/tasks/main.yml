@@ -5,9 +5,9 @@
   args:
     chdir: "{{ nc_dir }}/updater"
     warn: False
-  register: cmd_result
-  changed_when: cmd_result.stdout is not search('Nothing to do.')
-    
+  register: upgrade_result
+  changed_when: upgrade_result.stdout is not search('Nothing to do.')
+
 - name: update apps
   command: "sudo -u www-data php ./occ app:update --all"
   args:
@@ -26,6 +26,7 @@
   changed_when: cmd_result.stdout is not search('already installed')
   failed_when:  cmd_result.stdout is not search('already installed') and cmd_result.rc != 0
 
+## DB fixes (only on upgrade)
 - name: add missing indices
   command: "sudo -u www-data php ./occ db:add-missing-indices"
   args:
@@ -33,6 +34,7 @@
     warn: False
   register: cmd_result
   changed_when: cmd_result.stdout is search('table updated successfully')
+  when: upgrade_result.changed | default(true)
 
 - name: add missing columns
   command: "sudo -u www-data php ./occ db:add-missing-columns"
@@ -41,6 +43,7 @@
     warn: False
   register: cmd_result
   changed_when: cmd_result.stdout is search('table updated successfully')
+  when: upgrade_result.changed | default(true)
 
 - name: convert filecache to bigint
   command: "sudo -u www-data php ./occ -n db:convert-filecache-bigint"
@@ -49,3 +52,4 @@
     warn: False
   register: cmd_result
   changed_when: cmd_result.stdout is not search('tables already up to date')
+  when: upgrade_result.changed | default(true)
