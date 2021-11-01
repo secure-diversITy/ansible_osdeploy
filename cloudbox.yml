@@ -2,7 +2,7 @@
 # This playbook deploys the cloudbox on a minimal installation.
 
 - name: apply configuration to the cloudbox
-  hosts: all
+  hosts: cloudboxes
   remote_user: ansible
   become: Yes
   vars:
@@ -31,4 +31,24 @@
 #    - ddns-update
 #    - low-power
     - nextcloud
+    - nextcloud-upgrade
     - backup
+
+
+## Hosts in the the 'only_nextcloud'-group are only upgraded: 
+
+- name: upgrade nextcloud only
+  hosts: only_nextcloud
+  remote_user: ansible
+  become: Yes
+  vars:
+    nc_dir: "/var/www/nextcloud" 
+    nc_apps:
+      - calendar
+      - notes
+    ansible_python_interpreter: "/usr/bin/python3"
+
+  roles:
+    - up2date-debian
+    - nextcloud-upgrade
+
