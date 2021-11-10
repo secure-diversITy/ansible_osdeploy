@@ -1,0 +1,16 @@
+---
+# ansible-playbook edubox.yml -i <eduboxIPaddress>, --ask-become-pass
+
+- name: apply configuration to the edubox
+  hosts: all # eduboxes
+  remote_user: ansible
+  become: yes
+  vars:
+    contname: cont
+    containers: "{{ range(0, 9 + 1) | list }}"
+    extra_pkgs: [apt-cacher-ng]
+
+  roles:
+    - up2date-debian
+    - educontainer
+

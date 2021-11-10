@@ -1,0 +1,114 @@
+## Prepare minimal systemd-nspawn containers for educational use.
+##
+## Port mapping to the host:
+##
+##  container 0: ssh → host port 10000,  HTTP → 10100                 
+##  container 1: ssh → host port 10001,  HTTP → 10101 
+##     ...                        ...            ...
+##
+##  User 'ansible' in the sudo group.  Password is empty.
+##
+
+- name: start all containers
+  command: machinectl start {{ contname }}{{ "%02d" | format(item|int) }}
+  loop: "{{ containers }}"
+  tags:
+    - never
+    - start
+
+- name: stop all containers
+  command: machinectl stop {{ contname }}{{ "%02d" | format(item|int) }}
+  loop: "{{ containers }}"
+  tags:
+    - never
+    - stop
+
+- name: purge all containers
+  command: machinectl remove {{ contname }}{{ "%02d" | format(item|int) }}
+  loop: "{{ containers }}"
+  tags:
+    - never
+    - purge
+
+- name: debootstrap minimal system
+  command:
+    cmd: >
+      debootstrap 
+      --include=systemd-{{ contname }}ainer,openssh-server,sudo
+      --components=main,{{ contname }}rib,non-free stable
+      {{ contname }}00 http://deb.debian.org/debian
+  args:
+    chdir: /var/lib/machines/
+    creates: /var/lib/machines/{{ contname }}00
+  environment: 
+    http_proxy: http://localhost:3142
+
+- name: provide ansible user account
+  command:
+    cmd: >
+      chroot . sh -c '/usr/sbin/useradd -m -s /bin/bash 
+      -c "Ansible User,,," -G sudo ansible'
+  args:
+    chdir: /var/lib/machines/{{ contname }}00
+    creates: /var/lib/machines/{{ contname }}00/home/ansible
+  register: user_account
+
+- name: provide empty password for ansible user
+  command:
+    cmd: chroot . sh -c "passwd -d ansible"
+  args:
+    chdir: /var/lib/machines/{{ contname }}00
+  when: user_account.changed | default(false)
+
+- name: allow empty passwords in ssh
+  lineinfile:
+    path: /var/lib/machines/{{ contname }}00/etc/ssh/sshd_config
+    insertafter: '#PermitEmptyPasswords no'
+    line: 'PermitEmptyPasswords yes'
+ # when: user_account.changed | default(false)
+
+- name: prepare directories
+  file:
+    path: /var/lib/machines/{{ contname }}00/etc/systemd/system/{{ item }}
+    state: directory
+  loop:
+    - multi-user.target.wants
+    - sockets.target.wants
+    - network-online.target.wants
+
+- name: enable systemd-networkd service
+  file:
+    src: /lib/systemd/system/{{ item.src }}
+    dest: /var/lib/machines/{{ contname }}00/etc/systemd/system/{{ item.dest }}
+    state: link
+    force: yes
+  loop:
+    - { src: systemd-networkd.service, dest: dbus-org.freedesktop.network1.service }
+    - { src: systemd-networkd.service, dest: multi-user.target.wants/systemd-networkd.service }
+    - { src: systemd-networkd.socket, dest: sockets.target.wants/systemd-networkd.socket }
+    - { src: systemd-networkd-wait-online.service, dest: network-online.target.wants/systemd-networkd-wait-online.service }
+
+- name: clone the initial container
+  command: machinectl clone {{ contname }}00 {{ contname }}{{ "%02d" | format(item|int) }}
+  args:
+    creates: /var/lib/machines/{{ contname }}{{ "%02d" | format(item|int) }}
+  loop: "{{ containers[1:] }}"
+
+- name: provide container configuration
+  template:
+    src: contcfg.nspawn.j2
+    dest: /etc/systemd/nspawn/{{ contname}}{{ "%02d" | format(item|int) }}.nspawn
+  loop: "{{ containers }}"
+
+- name: provide container hostname
+  template:
+    src: hostname.j2
+    dest: /var/lib/machines/{{ contname }}{{ "%02d" | format(item|int) }}/etc/hostname
+  loop: "{{ containers }}"
+
+- name: start all containers on boot
+  systemd:
+    name: systemd-nspawn@{{ contname }}{{ "%02d" | format(item|int) }}.service
+    state: started 
+    enabled: yes
+  loop: "{{ containers }}"

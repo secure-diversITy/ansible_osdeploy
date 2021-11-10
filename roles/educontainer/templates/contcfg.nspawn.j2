@@ -1,0 +1,11 @@
+[Exec]
+Capability=CAP_NET_ADMIN
+ResolvConf=copy-host
+
+[Network]
+Port=10{{ "%03d" | format(item|int) }}:22
+Port=10{{ "%03d" | format(item|int + 100) }}:80
+
+[Files]
+Volatile=overlay
+PrivateUsersChown=false
