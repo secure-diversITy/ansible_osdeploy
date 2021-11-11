@@ -57,6 +57,20 @@
   environment: 
     http_proxy: http://localhost:3142
 
+- name: provide complete apt sources
+  copy:
+    src: /etc/apt/sources.list
+    dest: /var/lib/machines/{{ contname }}00/etc/apt/sources.list
+    remote_src: yes
+
+- name: upgrade container
+  command:
+    cmd: >
+      chroot . sh -c '/usr/bin/apt-get update &&
+      /usr/bin/apt-get full-upgrade --yes'
+  args:
+    chdir: /var/lib/machines/{{ contname }}00
+
 - name: provide ansible user account
   command:
     cmd: >
