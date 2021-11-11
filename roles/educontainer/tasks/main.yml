@@ -9,19 +9,14 @@
 ##  User 'ansible' in the sudo group.  Password is empty.
 ##
 
-- name: start all containers
-  command: machinectl start {{ contname }}{{ "%02d" | format(item|int) }}
-  loop: "{{ containers }}"
-  tags:
-    - never
-    - start
-
 - name: stop all containers
   command: machinectl stop {{ contname }}{{ "%02d" | format(item|int) }}
   loop: "{{ containers }}"
   tags:
     - never
     - stop
+    - reset
+    - purge
 
 - name: purge all containers
   command: machinectl remove {{ contname }}{{ "%02d" | format(item|int) }}
@@ -30,12 +25,31 @@
     - never
     - purge
 
+- name: reset all containers to the template
+  file:
+    path: /var/lib/machines/{{ contname }}{{ "%02d" | format(item|int) }}-delta
+    state: absent
+  loop: "{{ containers }}"
+  tags:
+    - never
+    - reset
+
+- name: start all containers
+  command: machinectl start {{ contname }}{{ "%02d" | format(item|int) }}
+  loop: "{{ containers }}"
+  tags:
+    - never
+    - start
+    - reset
+
+###########
+
 - name: debootstrap minimal system
   command:
     cmd: >
       debootstrap 
-      --include=systemd-{{ contname }}ainer,openssh-server,sudo
-      --components=main,{{ contname }}rib,non-free stable
+      --include=systemd-container,openssh-server,sudo,python3
+      --components=main,contrib,non-free stable
       {{ contname }}00 http://deb.debian.org/debian
   args:
     chdir: /var/lib/machines/
@@ -113,7 +127,7 @@
     dest: /var/lib/machines/{{ contname }}{{ "%02d" | format(item|int) }}.hosts
   loop: "{{ containers }}"
 
-- name: start all containers on boot
+- name: start all containers on boot and restart now
   systemd:
     name: systemd-nspawn@{{ contname }}{{ "%02d" | format(item|int) }}.service
     state: restarted 
