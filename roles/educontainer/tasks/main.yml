@@ -11,7 +11,7 @@
 
 - name: stop all containers
   command: machinectl stop {{ contname }}{{ "%02d" | format(item|int) }}
-  loop: "{{ containers }}"
+  loop: "{{ containers | reverse}}"
   tags:
     - never
     - stop
@@ -20,7 +20,7 @@
 
 - name: purge all containers
   command: machinectl remove {{ contname }}{{ "%02d" | format(item|int) }}
-  loop: "{{ containers }}"
+  loop: "{{ containers | reverse }}"
   tags:
     - never
     - purge
@@ -29,14 +29,14 @@
   file:
     path: /var/lib/machines/{{ contname }}{{ "%02d" | format(item|int) }}-delta
     state: absent
-  loop: "{{ containers }}"
+  loop: "{{ containers | reverse }}"
   tags:
     - never
     - reset
 
 - name: start all containers
   command: machinectl start {{ contname }}{{ "%02d" | format(item|int) }}
-  loop: "{{ containers }}"
+  loop: "{{ containers | reverse }}"
   tags:
     - never
     - start
