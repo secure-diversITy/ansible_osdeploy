@@ -88,10 +88,11 @@
     - { src: systemd-networkd.socket, dest: sockets.target.wants/systemd-networkd.socket }
     - { src: systemd-networkd-wait-online.service, dest: network-online.target.wants/systemd-networkd-wait-online.service }
 
-- name: clone the initial container
-  command: machinectl clone {{ contname }}00 {{ contname }}{{ "%02d" | format(item|int) }}
-  args:
-    creates: /var/lib/machines/{{ contname }}{{ "%02d" | format(item|int) }}
+- name: generate links to the initial container
+  file:
+    src: "{{ contname }}00"
+    dest: /var/lib/machines/{{ contname }}{{ "%02d" | format(item|int) }}
+    state: link
   loop: "{{ containers[1:] }}"
 
 - name: provide container configuration
@@ -100,15 +101,21 @@
     dest: /etc/systemd/nspawn/{{ contname}}{{ "%02d" | format(item|int) }}.nspawn
   loop: "{{ containers }}"
 
-- name: provide container hostname
+- name: provide container hostname file
   template:
     src: hostname.j2
-    dest: /var/lib/machines/{{ contname }}{{ "%02d" | format(item|int) }}/etc/hostname
+    dest: /var/lib/machines/{{ contname }}{{ "%02d" | format(item|int) }}.hostname
+  loop: "{{ containers }}"
+
+- name: provide container hosts file
+  template:
+    src: hosts.j2
+    dest: /var/lib/machines/{{ contname }}{{ "%02d" | format(item|int) }}.hosts
   loop: "{{ containers }}"
 
 - name: start all containers on boot
   systemd:
     name: systemd-nspawn@{{ contname }}{{ "%02d" | format(item|int) }}.service
-    state: started 
+    state: restarted 
     enabled: yes
   loop: "{{ containers }}"
