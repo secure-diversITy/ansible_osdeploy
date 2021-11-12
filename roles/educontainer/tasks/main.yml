@@ -6,7 +6,7 @@
 ##  container 1: ssh → host port 10001,  HTTP → 10101 
 ##     ...                        ...            ...
 ##
-##  User 'ansible' in the sudo group.  Password is empty.
+##  User 'ansible' in the sudo group.  Password is {{ contpwd }}.
 ##
 
 - name: stop all containers
@@ -68,6 +68,7 @@
     creates: /var/lib/machines/{{ contname }}00
   environment: 
     http_proxy: http://localhost:3142
+  notify: enable and restart containers
 
 - name: provide complete apt sources
   copy:
@@ -127,6 +128,7 @@
     - multi-user.target.wants
     - sockets.target.wants
     - network-online.target.wants
+  notify: enable and restart containers
 
 - name: enable systemd-networkd service
   file:
@@ -139,6 +141,9 @@
     - { src: systemd-networkd.service, dest: multi-user.target.wants/systemd-networkd.service }
     - { src: systemd-networkd.socket, dest: sockets.target.wants/systemd-networkd.socket }
     - { src: systemd-networkd-wait-online.service, dest: network-online.target.wants/systemd-networkd-wait-online.service }
+  notify: enable and restart containers
+
+########
 
 - name: generate links to the initial container
   file:
@@ -146,28 +151,25 @@
     dest: /var/lib/machines/{{ contname }}{{ "%02d" | format(item|int) }}
     state: link
   loop: "{{ containers[1:] }}"
+  notify: enable and restart containers
 
 - name: provide container configuration
   template:
     src: contcfg.nspawn.j2
     dest: /etc/systemd/nspawn/{{ contname}}{{ "%02d" | format(item|int) }}.nspawn
   loop: "{{ containers }}"
+  notify: enable and restart containers
 
 - name: provide container hostname file
   template:
     src: hostname.j2
     dest: /var/lib/machines/{{ contname }}{{ "%02d" | format(item|int) }}.hostname
   loop: "{{ containers }}"
+  notify: enable and restart containers
 
 - name: provide container hosts file
   template:
     src: hosts.j2
     dest: /var/lib/machines/{{ contname }}{{ "%02d" | format(item|int) }}.hosts
   loop: "{{ containers }}"
-
-- name: start all containers on boot and restart now
-  systemd:
-    name: systemd-nspawn@{{ contname }}{{ "%02d" | format(item|int) }}.service
-    state: restarted 
-    enabled: yes
-  loop: "{{ containers }}"
+  notify: enable and restart containers
