@@ -7,6 +7,9 @@
   become: yes
   vars:
     contname: cont
+    ## Password for the user 'ansible' in the container,
+    ## leave empty to log in without password:
+    contpwd: ""
     containers: "{{ range(0, 9 + 1) | list }}"
     extra_pkgs: [apt-cacher-ng]
 

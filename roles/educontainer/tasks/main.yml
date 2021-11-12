@@ -103,14 +103,21 @@
     cmd: chroot . sh -c "passwd -d ansible"
   args:
     chdir: /var/lib/machines/{{ contname }}00
-  when: user_account.changed | default(false)
+  when: user_account.changed | default(false) and contpwd | length == 0
+
+- name: provide password for container ansible user
+  command:
+    cmd: chroot . sh -c "echo ansible:{{ contpwd }} | chpasswd"
+  args:
+    chdir: /var/lib/machines/{{ contname }}00
+  when: user_account.changed | default(true) and contpwd | length > 0
 
 - name: allow empty passwords in ssh
   lineinfile:
     path: /var/lib/machines/{{ contname }}00/etc/ssh/sshd_config
     insertafter: '#PermitEmptyPasswords no'
     line: 'PermitEmptyPasswords yes'
-  when: user_account.changed | default(false)
+  when: user_account.changed | default(false) and contpwd | length == 0
 
 - name: prepare directories
   file:
