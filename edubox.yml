@@ -1,5 +1,22 @@
 ---
-# ansible-playbook edubox.yml -i <eduboxIPaddress>, --ask-become-pass
+## This playbook deploys a series of minimal systemd-nspawn containers
+## for educational use on a host, for example to learn ansible!
+## All containers use an apt cache on the host system and forward port
+## 22 (ssh), 80 (http) and 443 (https) to ports >= 10000, 10100 and 10200
+## respectively.  A user 'ansible' in the 'sudo' group is prepared,
+## either with empty password or an initial password to be set below.
+##
+## Modifications of the initial containers are kept in an overlay
+## directory next to the container images in '/var/lib/machines/'.
+## This allows to visit and compare the work of students on the host.
+## To manage the containers after installation, run the playbook with
+## one of the the following tags:
+##
+##    --tags=start    start all containers
+##    --tags=stop     stop all containers
+##    --tags=reset    reset all containers to the initial image
+##    --tags=purge    purge all containers
+##
 
 - name: apply configuration to the edubox
   hosts: all # eduboxes
@@ -10,6 +27,7 @@
     ## Password for the user 'ansible' in the container,
     ## leave empty to log in without password:
     contpwd: ""
+    ## Adjust the number of containers here:
     containers: "{{ range(0, 9 + 1) | list }}"
     extra_pkgs: [apt-cacher-ng]
 
