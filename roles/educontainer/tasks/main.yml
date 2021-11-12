@@ -11,7 +11,18 @@
 
 - name: stop all containers
   command: machinectl stop {{ contname }}{{ "%02d" | format(item|int) }}
+  register: stop_cont
   loop: "{{ containers | reverse}}"
+  tags:
+    - never
+    - stop
+    - reset
+    - purge
+
+- name: wait for containers to shut down
+  pause:
+    seconds: 30
+  when: stop_cont.changed | default(false)
   tags:
     - never
     - stop
@@ -33,6 +44,7 @@
   tags:
     - never
     - reset
+    - purge
 
 - name: start all containers
   command: machinectl start {{ contname }}{{ "%02d" | format(item|int) }}
@@ -48,7 +60,7 @@
   command:
     cmd: >
       debootstrap 
-      --include=systemd-container,openssh-server,sudo,python3
+      --include=systemd-container,openssh-server,sudo,python3,auto-apt-proxy
       --components=main,contrib,non-free stable
       {{ contname }}00 http://deb.debian.org/debian
   args:
@@ -62,6 +74,11 @@
     src: /etc/apt/sources.list
     dest: /var/lib/machines/{{ contname }}00/etc/apt/sources.list
     remote_src: yes
+
+- name: configure locale
+  lineinfile:
+    path: /var/lib/machines/{{ contname }}00/etc/profile
+    line: 'export LANG=C'
 
 - name: upgrade container
   command:
@@ -93,7 +110,7 @@
     path: /var/lib/machines/{{ contname }}00/etc/ssh/sshd_config
     insertafter: '#PermitEmptyPasswords no'
     line: 'PermitEmptyPasswords yes'
- # when: user_account.changed | default(false)
+  when: user_account.changed | default(false)
 
 - name: prepare directories
   file:
