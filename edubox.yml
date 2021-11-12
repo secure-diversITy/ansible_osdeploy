@@ -10,7 +10,19 @@
     containers: "{{ range(0, 9 + 1) | list }}"
     extra_pkgs: [apt-cacher-ng]
 
+  pre_tasks:
+    - name: enable apt-cacher-ng
+      lineinfile:
+        path: /etc/apt/apt.conf.d/30proxy
+        line: 'Acquire::http::Proxy "http://localhost:3142/";'
+        create: yes
+
+    - name: enable and start systemd-networkd on the host
+      systemd:
+        name: systemd-networkd
+        state: started
+        enabled: yes
+
   roles:
     - up2date-debian
     - educontainer
-
