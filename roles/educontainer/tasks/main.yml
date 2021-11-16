@@ -151,6 +151,16 @@
   notify: enable and restart containers
 
 ########
+- name: prepare sysctl configuration
+  file:
+    path: /etc/sysctl.d/inotify.conf
+    state: touch
+
+- name: fix too many open files error
+  sysctl:
+    name: fs.inotify.max_user_instances
+    value: '1024'
+    sysctl_file: /etc/sysctl.d/inotify.conf
 
 - name: generate links to the initial container
   file:
