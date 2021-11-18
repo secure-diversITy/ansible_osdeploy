@@ -58,11 +58,11 @@
       - debootstrap
     state: latest
 
-- name: debootstrap minimal system
+- name: debootstrap base system
   command:
     cmd: >
       debootstrap 
-      --include=systemd-container,openssh-server,sudo,python3,auto-apt-proxy
+      --include={{ cont_packages | join(',') }}
       --components=main,contrib,non-free stable
       {{ contname }}00 http://deb.debian.org/debian
   args:
