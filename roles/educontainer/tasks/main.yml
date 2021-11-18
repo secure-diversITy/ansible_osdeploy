@@ -10,19 +10,10 @@
 ##
 
 - name: stop all containers
-  command: machinectl stop {{ contname }}{{ "%02d" | format(item|int) }}
-  register: stop_cont
-  loop: "{{ containers | reverse}}"
-  tags:
-    - never
-    - stop
-    - reset
-    - purge
-
-- name: wait for containers to shut down
-  pause:
-    seconds: 30
-  when: stop_cont.changed | default(false)
+  systemd:
+    name: systemd-nspawn@{{ contname }}{{ "%02d" | format(item|int) }}.service
+    state: stopped
+  loop: "{{ containers | reverse }}"
   tags:
     - never
     - stop
@@ -30,13 +21,15 @@
     - purge
 
 - name: purge all containers
-  command: machinectl remove {{ contname }}{{ "%02d" | format(item|int) }}
+  command:
+    cmd: machinectl remove {{ contname }}{{ "%02d" | format(item|int) }}
+    removes: /var/lib/machines/{{ contname }}{{ "%02d" | format(item|int) }}
   loop: "{{ containers | reverse }}"
   tags:
     - never
     - purge
 
-- name: reset all containers to the template
+- name: remove container overlay
   file:
     path: /var/lib/machines/{{ contname }}{{ "%02d" | format(item|int) }}-delta
     state: absent
@@ -47,7 +40,9 @@
     - purge
 
 - name: start all containers
-  command: machinectl start {{ contname }}{{ "%02d" | format(item|int) }}
+  systemd:
+    name: systemd-nspawn@{{ contname }}{{ "%02d" | format(item|int) }}.service
+    state: started
   loop: "{{ containers | reverse }}"
   tags:
     - never
