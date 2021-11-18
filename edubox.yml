@@ -24,6 +24,8 @@
   become: yes
   vars:
     contname: cont
+    ## User name for the user in the container:
+    contuser: ansi
     ## Password for the user 'ansible' in the container,
     ## leave empty to log in without password:
     contpwd: ""

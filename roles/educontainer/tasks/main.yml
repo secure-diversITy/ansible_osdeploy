@@ -6,7 +6,7 @@
 ##  container 1: ssh → host port 10001,  HTTP → 10101 
 ##     ...                        ...            ...
 ##
-##  User 'ansible' in the sudo group.  Password is {{ contpwd }}.
+##  User '{{ contuser }}' in the sudo group.  Password is '{{ contpwd }}'.
 ##
 
 - name: stop all containers
@@ -91,26 +91,26 @@
   args:
     chdir: /var/lib/machines/{{ contname }}00
 
-- name: provide ansible user account
+- name: provide {{ contuser }} user account
   command:
     cmd: >
       chroot . sh -c '/usr/sbin/useradd -m -s /bin/bash 
-      -c "Ansible User,,," -G sudo ansible'
+      -c "User {{ contuser }},,," -G sudo {{ contuser }}'
   args:
     chdir: /var/lib/machines/{{ contname }}00
-    creates: /var/lib/machines/{{ contname }}00/home/ansible
+    creates: /var/lib/machines/{{ contname }}00/home/{{ contuser }}
   register: user_account
 
-- name: provide empty password for ansible user
+- name: provide empty password for {{ contuser }} user
   command:
-    cmd: chroot . sh -c "passwd -d ansible"
+    cmd: chroot . sh -c "passwd -d {{ contuser }}"
   args:
     chdir: /var/lib/machines/{{ contname }}00
   when: user_account.changed | default(false) and contpwd | length == 0
 
-- name: provide password for container ansible user
+- name: provide password for container {{ contuser }} user
   command:
-    cmd: chroot . sh -c "echo ansible:{{ contpwd }} | chpasswd"
+    cmd: chroot . sh -c "echo {{ contuser }}:{{ contpwd }} | chpasswd"
   args:
     chdir: /var/lib/machines/{{ contname }}00
   when: user_account.changed | default(true) and contpwd | length > 0
