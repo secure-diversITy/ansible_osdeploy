@@ -16,6 +16,7 @@
 ##    --tags=stop     stop all containers
 ##    --tags=reset    reset all containers to the initial image
 ##    --tags=purge    purge all containers
+##    --tags=setup    purge all containers and setup again
 ##
 
 - name: apply configuration to the edubox
