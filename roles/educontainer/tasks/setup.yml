@@ -39,6 +39,8 @@
       /usr/bin/apt-get full-upgrade --yes'
   args:
     chdir: /var/lib/machines/{{ contname }}00
+  register: cmd_result
+  changed_when: cmd_result.stdout is not search('0 upgraded, 0 newly installed, 0 to remove and 0 not upgraded.')
 
 - name: provide {{ contuser }} user account
   command:
@@ -95,10 +97,11 @@
   notify: enable and restart containers
 
 ########
-- name: prepare sysctl configuration
-  file:
-    path: /etc/sysctl.d/inotify.conf
-    state: touch
+- name: prepare local sysctl config file
+  copy:
+    content: "# Avoid 'too many open files' error:"
+    dest: /etc/sysctl.d/inotify.conf
+    force: no
 
 - name: fix too many open files error
   sysctl:
