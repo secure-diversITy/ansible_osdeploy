@@ -5,20 +5,9 @@ cont_packages:
   - sudo
   - python3
   - auto-apt-proxy
-
   - bash-completion
-  - bind9-dnsutils
-  - file
-  - locales
-  - xz-utils
-  - lsof
-  - wget
-  - bind9-host
-  - man-db
   - ca-certificates
+  - man-db
   - manpages
-  - libc-l10n
-  - traceroute
-  - bzip2
-  - netcat-traditional
-  - telnet
+
+cont_packages_extra: []

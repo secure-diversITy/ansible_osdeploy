@@ -62,7 +62,7 @@
   command:
     cmd: >
       debootstrap 
-      --include={{ cont_packages | join(',') }}
+      --include={{ cont_packages | union(cont_packages_extra) | join(',') }}
       --components=main,contrib,non-free stable
       {{ contname }}00 http://deb.debian.org/debian
   args:

@@ -3,7 +3,7 @@
 ## for educational use on a host, for example to learn ansible!
 ## All containers use an apt cache on the host system and forward port
 ## 22 (ssh), 80 (http) and 443 (https) to ports >= 10000, 10100 and 10200
-## respectively.  A user 'ansible' in the 'sudo' group is prepared,
+## respectively.  A user 'ansi' in the 'sudo' group is prepared,
 ## either with empty password or an initial password to be set below.
 ##
 ## Modifications of the initial containers are kept in an overlay
@@ -31,6 +31,20 @@
     contpwd: ""
     ## Adjust the number of containers here:
     containers: "{{ range(0, 9 + 1) | list }}"
+    ## Additional packages to be installed in the container:
+    cont_packages_extra:
+      - bind9-dnsutils
+      - file
+      - locales
+      - xz-utils
+      - lsof
+      - wget
+      - bind9-host
+      - libc-l10n
+      - traceroute
+      - bzip2
+      - netcat-traditional
+      - telnet
 
   pre_tasks:
     - name: install apt-cacher-ng
