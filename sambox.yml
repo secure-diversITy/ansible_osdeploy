@@ -18,6 +18,9 @@
 
     ## LAN IP address range:
     ipaddr_lan: 192.168.0.10/24
+    ipaddr_lan_threeoct: "{{ ipaddr_lan.split('.')[0:3] | join('.') }}"
+    ipaddr_lan_ptr: "{{ (ipaddr_lan | ipaddr('revdns')).split('.')[1:] | join('.') }}"
+    ipaddr_lan_ptr_threeoct: "{{ ipaddr_lan_ptr.split('.')[0:3] | join('.') }}"
     dhcp_start: 192.168.0.50
     dhcp_stop:  192.168.0.150
     in_inventory: 192.168.0.[50:150]

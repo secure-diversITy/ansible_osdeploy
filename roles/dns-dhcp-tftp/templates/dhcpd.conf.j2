@@ -26,7 +26,7 @@ zone intern. {
   key rndc-key;
 }
 
-zone 0.168.192.in-addr.arpa. {
+zone {{ ipaddr_lan_ptr }} {
   primary 127.0.0.1;
   key rndc-key;
 }
@@ -41,7 +41,7 @@ authoritative;
 #log-facility local7;
 
 ## The tftpd server IP address, for all clients.
-next-server 192.168.0.10;
+next-server {{ ipaddr_lan | ipaddr("address") }};
 
 option arch code 93 = unsigned integer 16;
 if option arch = 00:07 {
@@ -50,7 +50,7 @@ if option arch = 00:07 {
       filename "d-i/n-a/pxelinux.0";
 }
 
-subnet 192.168.0.0 netmask 255.255.255.0 {
+subnet {{ ipaddr_lan | ipaddr("network") }} netmask {{ ipaddr_lan | ipaddr("netmask") }} {
       option routers {{ ipaddr_lan | ipaddr("address") }};
       range {{ dhcp_start }} {{ dhcp_stop }};
 }
